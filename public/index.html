@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e3a8a">
+  <title>ProfCheck IA — Détection de triche par IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Inter', sans-serif; overscroll-behavior-y: none; }
+    .prose-custom h3 { font-size: 1.05rem; font-weight: 800; color: #1e293b; margin-top: 1.25rem; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+    .prose-custom h4 { font-size: 0.95rem; font-weight: 700; color: #334155; margin-top: 1rem; margin-bottom: 0.4rem; }
+    .prose-custom p { margin-bottom: 0.65rem; line-height: 1.75; color: #334155; font-size: 0.9rem; }
+    .prose-custom ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.65rem; }
+    .prose-custom li { margin-bottom: 0.3rem; color: #334155; font-size: 0.88rem; line-height: 1.6; }
+    .prose-custom strong { color: #0f172a; font-weight: 700; }
+    .prose-custom blockquote { border-left: 3px solid #cbd5e1; padding-left: 0.75rem; color: #475569; font-style: italic; margin: 0.5rem 0; }
+    .gradient-text { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .spinner { border: 3px solid #e2e8f0; border-top: 3px solid #3b82f6; border-radius: 50%; width: 36px; height: 36px; animation: spin 0.9s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .fade-in { animation: fadeIn 0.35s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .touch-btn { min-height: 48px; }
+    .touch-btn-sm { min-height: 40px; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    textarea:focus, select:focus, button:focus { outline: none; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- NAVBAR -->
+  <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex justify-between items-center h-14">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-brand-900 flex items-center justify-center text-white font-bold text-base shadow-md">P</div>
+          <span class="text-lg font-extrabold tracking-tight"><span class="gradient-text">ProfCheck</span></span>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <div id="compteur-essais" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
+            <svg class="w-3.5 h-3.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Chargement...</span>
+          </div>
+          <button onclick="ouvrirModalAbonnement()" class="touch-btn-sm px-3 py-1.5 rounded-lg bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-transform active:scale-95">S'abonner</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="flex-grow max-w-7xl mx-auto px-4 py-5 w-full">
+
+    <!-- Alerte limite atteinte -->
+    <div id="alerte-limite" class="hidden mb-4 fade-in">
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3 shadow-sm">
+        <div class="flex-shrink-0 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-red-800 font-bold text-sm">🔒 Limite d'essais gratuits atteinte</h3>
+          <p class="text-red-700 text-xs mt-1 leading-relaxed">Vos 3 analyses gratuites sont épuisées. Souscrivez un abonnement Enseignant pour débloquer l'illimité.</p>
+          <button onclick="ouvrirModalAbonnement()" class="mt-2.5 touch-btn-sm px-3.5 py-2 bg-red-600 active:bg-red-700 text-white text-xs font-bold rounded-lg w-full sm:w-auto">Voir les abonnements</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerte premium actif -->
+    <div id="alerte-premium" class="hidden mb-4 fade-in">
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3 shadow-sm">
+        <div class="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-emerald-800 font-bold text-sm">✨ Abonnement actif</h3>
+          <p class="text-emerald-700 text-xs mt-1 leading-relaxed">Accès illimité aux analyses pédagogiques. Merci pour votre confiance !</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grille principale -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+
+      <!-- COLONNE GAUCHE : SAISIE -->
+      <div class="flex flex-col gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="px-4 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <svg class="w-4.5 h-4.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              Devoir de l'élève
+            </h2>
+          </div>
+
+          <div class="p-4 space-y-3.5">
+            <!-- Métadonnées -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Niveau</label>
+                <select id="niveau" class="w-full rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-medium py-2.5 px-2.5 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all appearance-none">
+                  <option value="non précisé">-- Niveau --</option>
+                  <option value="Collège">Collège</option>
+                  <option value="Lycée">Lycée</option>
+                  <option value="Supérieur">Supérieur</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Matière</label>
+                <select id="matiere" class="w-full rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-medium py-2.5 px-2.5 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all appearance-none">
+                  <option value="non précisée">-- Matière --</option>
+                  <option value="Français">Français</option>
+                  <option value="Histoire-Géo">Histoire-Géo</option>
+                  <option value="Philosophie">Philosophie</option>
+                  <option value="Sciences">Sciences</option>
+                  <option value="Langues">Langues</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Textarea -->
+            <div class="relative">
+              <textarea id="devoir-texte" placeholder="Collez ici le texte du devoir suspecté..." class="w-full h-64 sm:h-80 resize-y rounded-xl border border-slate-200 bg-white text-slate-700 text-sm leading-relaxed p-3.5 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all shadow-inner"></textarea>
+              <div class="absolute bottom-2.5 right-2.5 text-[10px] text-slate-400 font-bold bg-white/90 px-2 py-1 rounded-md backdrop-blur-sm border border-slate-100">
+                <span id="char-count">0</span> car.
+              </div>
+            </div>
+
+            <!-- Bouton analyse -->
+            <button id="btn-analyser" onclick="lancerAnalyse()" class="touch-btn w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 active:from-brand-700 active:to-brand-800 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2">
+              <svg id="icon-analyser" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span id="texte-btn">Analyser le devoir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Info card -->
+        <div class="bg-brand-50 border border-brand-100 rounded-xl p-3.5 flex gap-3">
+          <svg class="w-5 h-5 text-brand-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-[11px] text-brand-800 leading-relaxed font-medium"><strong>Confidentialité :</strong> le texte est analysé de manière sécurisée. Aucune donnée n'est conservée au-delà de la session.</p>
+        </div>
+      </div>
+
+      <!-- COLONNE DROITE : RÉSULTAT -->
+      <div class="flex flex-col gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[420px] lg:min-h-[580px]">
+          <div class="px-4 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <svg class="w-4.5 h-4.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Rapport d'analyse
+            </h2>
+            <span id="badge-etat" class="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500">En attente</span>
+          </div>
+
+          <div id="zone-resultat" class="flex-grow p-4 relative overflow-y-auto">
+            <!-- État vide -->
+            <div id="etat-vide" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6">
+              <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                <svg class="w-7 h-7 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+              <p class="text-sm font-bold text-slate-500">Aucune analyse</p>
+              <p class="text-xs mt-1 text-slate-400 text-center max-w-[240px] leading-relaxed">Collez un devoir et appuyez sur Analyser pour obtenir le rapport forensique.</p>
+            </div>
+
+            <!-- État chargement -->
+            <div id="etat-chargement" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm z-10">
+              <div class="spinner mb-3"></div>
+              <p class="text-sm font-bold text-slate-600">Analyse en cours...</p>
+              <p class="text-xs text-slate-400 mt-1 text-center px-4">Détection des signatures IA, évaluation stylistique et factuelle</p>
+            </div>
+
+            <!-- État résultat -->
+            <div id="etat-resultat" class="hidden h-full">
+              <div id="contenu-markdown" class="prose-custom"></div>
+            </div>
+
+            <!-- État erreur -->
+            <div id="etat-erreur" class="hidden absolute inset-0 flex flex-col items-center justify-center p-6">
+              <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <p class="text-sm font-bold text-red-700" id="erreur-titre">Erreur</p>
+              <p class="text-xs text-red-500 mt-1 text-center max-w-[260px] leading-relaxed" id="erreur-message">Une erreur est survenue.</p>
+              <button onclick="lancerAnalyse()" class="mt-4 touch-btn-sm px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg active:bg-red-50">Réessayer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL ABONNEMENTS -->
+  <div id="modal-abonnement" class="hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity" onclick="fermerModalAbonnement()"></div>
+    <div class="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4">
+      <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto">
+        <div class="p-5 sticky top-0 bg-white z-10 border-b border-slate-100 flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-extrabold text-slate-900">Choisissez votre formule</h3>
+            <p class="text-slate-500 text-xs mt-0.5">Analyses illimitées pour enseignants</p>
+          </div>
+          <button onclick="fermerModalAbonnement()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 active:bg-slate-200 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="p-5 space-y-3">
+          <!-- Mensuel -->
+          <div class="rounded-xl border-2 border-slate-100 bg-white p-4 flex flex-col gap-3 active:border-brand-200 transition-colors">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm">Mensuel Individuel</h4>
+                <p class="text-slate-400 text-[11px]">Sans engagement</p>
+              </div>
+              <div class="text-right">
+                <span class="text-2xl font-extrabold text-slate-900">9,90€</span><span class="text-slate-400 text-xs">/mois</span>
+              </div>
+            </div>
+            <ul class="space-y-1.5 text-xs text-slate-600">
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Analyses illimitées</li>
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Rapports PDF détaillés</li>
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Support email 48h</li>
+            </ul>
+            <button onclick="payerStripe('mensuel')" class="touch-btn w-full py-3 rounded-lg border-2 border-brand-600 text-brand-600 font-bold text-sm active:bg-brand-50 transition-colors">Choisir Mensuel</button>
+          </div>
+
+          <!-- Annuel -->
+          <div class="rounded-xl border-2 border-brand-500 bg-brand-50/20 p-4 flex flex-col gap-3 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-brand-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-bl-lg tracking-wide">POPULAIRE</div>
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm">Annuel Individuel</h4>
+                <p class="text-slate-400 text-[11px]">Le plus économique</p>
+              </div>
+              <div class="text-right">
+                <span class="text-2xl font-extrabold text-slate-900">79,90€</span><span class="text-slate-400 text-xs">/an</span>
+              </div>
+            </div>
+            <div class="inline-flex self-start">
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Économisez 33%</span>
+            </div>
+            <ul class="space-y-1.5 text-xs text-slate-600">
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Tout le plan Mensuel</li>
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Support prioritaire 24h</li>
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Historique des analyses</li>
+            </ul>
+            <button onclick="payerStripe('annuel')" class="touch-btn w-full py-3 rounded-lg bg-brand-600 active:bg-brand-700 text-white font-bold text-sm shadow-lg shadow-brand-500/20 active:scale-[0.98] transition-transform">Choisir Annuel</button>
+          </div>
+
+          <!-- Établissement -->
+          <div class="rounded-xl border-2 border-slate-100 bg-white p-4 flex flex-col gap-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm">Offre Établissement</h4>
+                <p class="text-slate-400 text-[11px]">Écoles, collèges, lycées</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xl font-extrabold text-slate-900">Sur devis</span>
+              </div>
+            </div>
+            <ul class="space-y-1.5 text-xs text-slate-600">
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Licences multi-utilisateurs</li>
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Dashboard admin</li>
+              <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Support dédié + API</li>
+            </ul>
+            <button onclick="alert('Contactez-nous à contact@profcheck-ia.fr pour un devis personnalisé.')" class="touch-btn w-full py-3 rounded-lg border-2 border-slate-300 text-slate-700 font-bold text-sm active:bg-slate-50 active:border-slate-400 transition-colors">Demander un devis</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    const API_URL = '/api/analyse-devoir';
+    const API_ME = '/api/me';
+    const API_CHECKOUT = '/api/create-checkout-session';
+
+    let state = { remaining: 3, max: 3, isPremium: false, isLoading: false };
+
+    async function init() {
+      await syncStateWithServer();
+      handleReturnFromStripe();
+      setupListeners();
+    }
+
+    async function syncStateWithServer() {
+      try {
+        const res = await fetch(API_ME, { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+          state.remaining = data.data.remaining !== null ? data.data.remaining : Infinity;
+          state.isPremium = data.data.isPremium;
+          state.max = data.data.max;
+          updateUI();
+        }
+      } catch (err) {
+        console.error('Sync error:', err);
+        updateUI();
+      }
+    }
+
+    function handleReturnFromStripe() {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('premium');
+      if (status === 'success') {
+        syncStateWithServer().then(() => {
+          showToast('✨ Paiement confirmé ! Accès illimité activé.', 'success');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+      } else if (status === 'cancel') {
+        showToast('❌ Paiement annulé. Aucun prélèvement.', 'error');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    function setupListeners() {
+      const ta = document.getElementById('devoir-texte');
+      ta.addEventListener('input', () => {
+        document.getElementById('char-count').textContent = ta.value.length;
+      });
+    }
+
+    function updateUI() {
+      const compteur = document.getElementById('compteur-essais');
+      const alerteLimite = document.getElementById('alerte-limite');
+      const alertePremium = document.getElementById('alerte-premium');
+      const textarea = document.getElementById('devoir-texte');
+      const btn = document.getElementById('btn-analyser');
+
+      if (state.isPremium) {
+        compteur.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg><span class="text-emerald-700 font-bold">Premium</span>`;
+        compteur.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200";
+        alerteLimite.classList.add('hidden');
+        alertePremium.classList.remove('hidden');
+        textarea.disabled = false;
+        btn.disabled = false;
+        return;
+      }
+
+      const utilises = state.max - state.remaining;
+      compteur.innerHTML = `<svg class="w-3.5 h-3.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>${utilises}/${state.max} essais</span>`;
+      compteur.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200";
+      alertePremium.classList.add('hidden');
+
+      if (state.remaining <= 0) {
+        textarea.disabled = true;
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+        alerteLimite.classList.remove('hidden');
+      } else {
+        textarea.disabled = false;
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+        alerteLimite.classList.add('hidden');
+      }
+    }
+
+    async function lancerAnalyse() {
+      if (state.isLoading) return;
+      const ta = document.getElementById('devoir-texte');
+      const texte = ta.value.trim();
+      const niveau = document.getElementById('niveau').value;
+      const matiere = document.getElementById('matiere').value;
+
+      if (!texte) {
+        afficherErreur('Texte vide', 'Collez le texte du devoir avant d\'analyser.');
+        return;
+      }
+      if (!state.isPremium && state.remaining <= 0) {
+        ouvrirModalAbonnement();
+        return;
+      }
+
+      state.isLoading = true;
+      setEtat('chargement');
+      const btn = document.getElementById('btn-analyser');
+      const btnText = document.getElementById('texte-btn');
+      const original = btnText.textContent;
+      btnText.textContent = 'Analyse en cours...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ texte, niveau, matiere })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          if (data.error?.code === 'QUOTA_EXCEEDED') {
+            state.remaining = 0;
+            updateUI();
+            ouvrirModalAbonnement();
+            throw new Error('QUOTA');
+          }
+          throw new Error(data.error?.message || 'Erreur serveur');
+        }
+
+        if (data.data.quota) {
+          state.remaining = data.data.quota.remaining !== null ? data.data.quota.remaining : Infinity;
+          state.isPremium = data.data.quota.isPremium;
+          updateUI();
+        }
+        afficherResultat(data.data.analyse, data.data.meta);
+
+      } catch (err) {
+        if (err.message === 'QUOTA') return;
+        let titre = 'Erreur', msg = err.message || 'Problème de connexion.';
+        if (msg.includes('API_KEY')) { titre = 'Config'; msg = 'Clé API non configurée.'; }
+        else if (msg.includes('429') || msg.includes('RATE') || msg.includes('BALANCE')) { titre = 'Quota API'; msg = 'Service temporairement saturé.'; }
+        else if (msg.includes('TOKENS') || msg.includes('long')) { titre = 'Trop long'; msg = 'Divisez le texte en parties.'; }
+        afficherErreur(titre, msg);
+      } finally {
+        state.isLoading = false;
+        btnText.textContent = original;
+        btn.disabled = (!state.isPremium && state.remaining <= 0);
+      }
+    }
+
+    function setEtat(etat) {
+      ['etat-vide','etat-chargement','etat-resultat','etat-erreur'].forEach(id =>
+        document.getElementById(id).classList.add('hidden')
+      );
+      const badge = document.getElementById('badge-etat');
+      const map = {
+        vide: ['etat-vide', 'En attente', 'bg-slate-100 text-slate-500'],
+        chargement: ['etat-chargement', 'Analyse...', 'bg-brand-100 text-brand-700 animate-pulse'],
+        resultat: ['etat-resultat', 'Terminé', 'bg-emerald-100 text-emerald-700'],
+        erreur: ['etat-erreur', 'Erreur', 'bg-red-100 text-red-700']
+      };
+      const [id, text, cls] = map[etat];
+      document.getElementById(id).classList.remove('hidden');
+      badge.textContent = text;
+      badge.className = `text-[10px] font-bold px-2 py-1 rounded-full ${cls}`;
+    }
+
+    function afficherResultat(md, meta) {
+      const c = document.getElementById('contenu-markdown');
+      c.innerHTML = marked.parse(md);
+      if (meta?.niveauSuspicion) {
+        const colors = [
+          'bg-emerald-50 border-emerald-200 text-emerald-800',
+          'bg-emerald-50 border-emerald-200 text-emerald-800',
+          'bg-yellow-50 border-yellow-200 text-yellow-800',
+          'bg-orange-50 border-orange-200 text-orange-800',
+          'bg-red-50 border-red-200 text-red-800'
+        ];
+        const labels = ['Très probablement authentique','Probablement authentique','Suspicion modérée','Suspicion élevée','Forte probabilité IA'];
+        const idx = Math.min(Math.max(meta.niveauSuspicion - 1, 0), 4);
+        const div = document.createElement('div');
+        div.className = `mb-3 p-3 rounded-lg border ${colors[idx]} flex items-center justify-between fade-in`;
+        div.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="font-bold text-xs">Suspicion : ${meta.niveauSuspicion}/5</span><span class="text-[10px] opacity-70">${labels[idx]}</span></div><span class="text-[10px] opacity-50">${meta.modelUsed||'Kimi'}</span>`;
+        c.insertBefore(div, c.firstChild);
+      }
+      setEtat('resultat');
+    }
+
+    function afficherErreur(titre, msg) {
+      document.getElementById('erreur-titre').textContent = titre;
+      document.getElementById('erreur-message').textContent = msg;
+      setEtat('erreur');
+    }
+
+    function ouvrirModalAbonnement() {
+      document.getElementById('modal-abonnement').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function fermerModalAbonnement() {
+      document.getElementById('modal-abonnement').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    async function payerStripe(plan) {
+      const btn = event.currentTarget;
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Redirection...';
+      try {
+        const res = await fetch(API_CHECKOUT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ plan })
+        });
+        const data = await res.json();
+        if (!data.success || !data.data?.url) throw new Error(data.error?.message || 'Erreur Stripe');
+        window.location.href = data.data.url;
+      } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    function showToast(msg, type) {
+      const colors = { success: 'bg-emerald-600', error: 'bg-red-600', info: 'bg-slate-700' };
+      const t = document.createElement('div');
+      t.className = `fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 sm:w-auto ${colors[type]||colors.info} text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 fade-in`;
+      t.innerHTML = `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="text-sm font-bold">${msg}</p>`;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(()=>t.remove(),400); }, 4500);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && e.key === 'Enter') lancerAnalyse();
+    });
+
+    init();
+  </script>
+</body>
+</html>
