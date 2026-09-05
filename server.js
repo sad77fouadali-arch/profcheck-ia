@@ -270,7 +270,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/me', async (req, res) => {
   const sid = req.sessionID;
   const remaining = await getRemainingEssais(sid);
-n  const premium = await isPremium(sid);
+  const premium = await isPremium(sid);
   res.json({
     success: true,
     data: { isPremium: premium, remaining, max: MAX_ESSAIS_GRATUITS },
