@@ -1,8 +1,8 @@
 /**
  * ═══════════════════════════════════════════════════════════════════
  *  ProfCheck IA — server.js (Render.com ready)
- *  Backend complet : Express + Kimi API + Stripe + Supabase
- *  Toutes les clés sensibles via process.env (sécurisé)
+ *  Backend : Express + Kimi API + Supabase
+ *  Premium activé manuellement via WhatsApp
  * ═══════════════════════════════════════════════════════════════════
  */
 
@@ -20,12 +20,6 @@ const CONFIG = {
   MOONSHOT_API_KEY: process.env.MOONSHOT_API_KEY,
   KIMI_MODEL: process.env.KIMI_MODEL || 'kimi-k3',
 
-  // Stripe
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-  STRIPE_PRICE_MONTHLY: process.env.STRIPE_PRICE_MONTHLY,
-  STRIPE_PRICE_YEARLY: process.env.STRIPE_PRICE_YEARLY,
-
   // Session
   SESSION_SECRET: process.env.SESSION_SECRET || 'changez-moi-en-production-64-caracteres-minimum!!',
 };
@@ -40,7 +34,6 @@ const cors = require('cors');
 const session = require('express-session');
 const path = require('path');
 const OpenAI = require('openai');
-const stripe = require('stripe')(CONFIG.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
 // ═══════════════════════════════════════════
@@ -73,43 +66,20 @@ async function getOrCreateUser(sessionId) {
 
   if (insertError) {
     console.error('[Supabase] createUser error:', insertError.message);
-    return { session_id: sessionId, count: 0, premium: false, stripe_customer_id: null, subscription_id: null };
+    return { session_id: sessionId, count: 0, premium: false };
   }
 
   return newUser;
 }
 
-async function setPremium(sessionId, value, customerId = null, subscriptionId = null) {
-  const update = { premium: value };
-  if (customerId !== null) update.stripe_customer_id = customerId;
-  if (subscriptionId !== null) update.subscription_id = subscriptionId;
-
+async function setPremium(sessionId, value) {
   const { error } = await supabase
     .from('users')
-    .update(update)
+    .update({ premium: value })
     .eq('session_id', sessionId);
 
   if (error) console.error('[Supabase] setPremium error:', error.message);
   return !error;
-}
-
-async function cancelPremiumByCustomer(customerId) {
-  const { data, error } = await supabase
-    .from('users')
-    .update({ premium: false })
-    .eq('stripe_customer_id', customerId)
-    .select('session_id');
-
-  if (error) {
-    console.error('[Supabase] cancelPremium error:', error.message);
-    return false;
-  }
-
-  if (data && data.length > 0) {
-    console.log(`[Auth] Premium désactivé pour ${data.length} utilisateur(s) (customer: ${customerId})`);
-    return true;
-  }
-  return false;
 }
 
 async function incrementEssai(sessionId) {
@@ -224,49 +194,16 @@ app.use(session({
 }));
 
 // ═══════════════════════════════════════════
-// 8. WEBHOOK STRIPE (body RAW obligatoire)
-// ═══════════════════════════════════════════
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, CONFIG.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error('[Webhook Signature Error]', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  console.log(`[Webhook] Événement reçu : ${event.type}`);
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const sessionId = session.metadata?.sessionId;
-    if (sessionId && session.subscription) {
-      await setPremium(sessionId, true, session.customer, session.subscription);
-      console.log(`[Webhook] ✅ Premium ACTIVÉ session ${sessionId}`);
-    }
-  }
-
-  if (event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object;
-    await cancelPremiumByCustomer(subscription.customer);
-  }
-
-  res.json({ received: true });
-});
-
-// ═══════════════════════════════════════════
-// 9. MIDDLEWARES STANDARDS
+// 8. MIDDLEWARES STANDARDS
 // ═══════════════════════════════════════════
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ═══════════════════════════════════════════
-// 10. ROUTES API
+// 9. ROUTES API
 // ═══════════════════════════════════════════
 
-// ── 10a. Statut utilisateur ──
+// ── 9a. Statut utilisateur ──
 app.get('/api/me', async (req, res) => {
   const sid = req.sessionID;
   const remaining = await getRemainingEssais(sid);
@@ -277,42 +214,18 @@ app.get('/api/me', async (req, res) => {
   });
 });
 
-// ── 10b. Création session Stripe Checkout ──
+// ── 9b. Activation Premium (via WhatsApp) ──
 app.post('/api/create-checkout-session', async (req, res) => {
-  try {
-    const { plan } = req.body;
-    const priceId = plan === 'annuel' ? CONFIG.STRIPE_PRICE_YEARLY : CONFIG.STRIPE_PRICE_MONTHLY;
-
-    if (!priceId) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_PLAN', message: 'Plan inconnu ou non configuré.' },
-      });
-    }
-
-    const origin = `${req.protocol}://${req.get('host')}`;
-
-    const checkoutSession = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
-      success_url: `${origin}/?premium=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?premium=cancel`,
-      metadata: { sessionId: req.sessionID, plan: plan },
-    });
-
-    res.json({ success: true, data: { url: checkoutSession.url } });
-
-  } catch (err) {
-    console.error('[Stripe Checkout Error]', err);
-    res.status(500).json({
-      success: false,
-      error: { code: 'STRIPE_ERROR', message: 'Impossible de créer la session de paiement.' },
-    });
-  }
+  res.json({
+    success: true,
+    data: {
+      message: 'Contactez-nous sur WhatsApp pour activer le premium.',
+      whatsapp: 'https://wa.me/25377098637',  // ← REMPLACE 253XXXXXXXXX par ton numéro
+    },
+  });
 });
 
-// ── 10c. Validation & Quota (async) ──
+// ── 9c. Validation & Quota (async) ──
 function validateAnalyse(req, res, next) {
   const { texte, niveau, matiere } = req.body;
   if (!texte || typeof texte !== 'string' || texte.trim().length === 0) {
@@ -343,7 +256,7 @@ async function checkQuota(req, res, next) {
       success: false,
       error: {
         code: 'QUOTA_EXCEEDED',
-        message: 'Limite d\'essais gratuits atteinte. Souscrivez un abonnement.',
+        message: 'Limite d\'essais gratuits atteinte. Contactez-nous sur WhatsApp pour activer le premium.',
         remaining: 0,
         max: MAX_ESSAIS_GRATUITS,
         isPremium: false,
@@ -353,7 +266,7 @@ async function checkQuota(req, res, next) {
   next();
 }
 
-// ── 10d. Analyse pédagogique (Kimi API) ──
+// ── 9d. Analyse pédagogique (Kimi API) ──
 app.post('/api/analyse-devoir', validateAnalyse, checkQuota, async (req, res) => {
   const { texte, niveau, matiere } = req.analyseData;
   const sid = req.sessionID;
@@ -432,13 +345,13 @@ app.post('/api/analyse-devoir', validateAnalyse, checkQuota, async (req, res) =>
   }
 });
 
-// ── 10e. Health check ──
+// ── 9e. Health check ──
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'profcheck-ia', timestamp: new Date().toISOString() });
 });
 
 // ═══════════════════════════════════════════
-// 11. GESTIONNAIRE D'ERREURS GLOBAL
+// 10. GESTIONNAIRE D'ERREURS GLOBAL
 // ═══════════════════════════════════════════
 app.use((err, req, res, next) => {
   console.error('[GLOBAL ERROR]', err);
@@ -449,10 +362,11 @@ app.use((err, req, res, next) => {
 });
 
 // ═══════════════════════════════════════════
-// 12. DÉMARRAGE
+// 11. DÉMARRAGE
 // ═══════════════════════════════════════════
 app.listen(CONFIG.PORT, () => {
   console.log(`🚀 ProfCheck IA + Supabase sur le port ${CONFIG.PORT}`);
   console.log(`🔗 Base de données : ${CONFIG.SUPABASE_URL}`);
-  console.log(`🔑 Kimi: ${CONFIG.KIMI_MODEL} | Stripe: ${CONFIG.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'PROD' : 'TEST'}`);
+  console.log(`🔑 Kimi: ${CONFIG.KIMI_MODEL} | Paiement: WhatsApp manuel`);
 });
+
