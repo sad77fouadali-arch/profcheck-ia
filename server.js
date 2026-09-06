@@ -345,6 +345,37 @@ app.post('/api/analyse-devoir', validateAnalyse, checkQuota, async (req, res) =>
   }
 });
 
+// ── 9f. Routes Admin ──
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'profcheck2024';
+
+function checkAdmin(req, res, next) {
+  const auth = req.headers.authorization;
+  if (auth !== `Bearer ${ADMIN_PASSWORD}`) {
+    return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Accès refusé.' } });
+  }
+  next();
+}
+
+app.get('/api/admin/stats', checkAdmin, async (req, res) => {
+  try {
+    const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
+    const { count: premiumUsers } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('premium', true);
+    const { data: recentUsers } = await supabase.from('users').select('session_id, count, premium').limit(50).order('id', { ascending: false });
+    res.json({
+      success: true,
+      data: {
+        totalUsers: totalUsers || 0,
+        premiumUsers: premiumUsers || 0,
+        freeUsers: (totalUsers || 0) - (premiumUsers || 0),
+        recentUsers: recentUsers || [],
+      }
+    });
+  } catch (error) {
+    console.error('[Admin Stats Error]', error);
+    res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Erreur admin.' } });
+  }
+});
+
 // ── 9e. Health check ──
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'profcheck-ia', timestamp: new Date().toISOString() });
