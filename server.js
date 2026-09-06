@@ -66,8 +66,9 @@ const PLANS = {
   pro: { maxAnalyses: 9999, maxProgrammes: 3, name: 'Pro ($36)' },
   institution: { maxAnalyses: 9999, maxProgrammes: 99, name: 'Institution ($79)' }
 };
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-const ADMIN_PASSWORD = 'profchek2026'; // SadikFouad1996!Prof
+
 
 // ============ MIDDLEWARES ============
 function auth(req, res, next) {
