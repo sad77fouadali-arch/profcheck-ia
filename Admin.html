@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - SADIK-FOUAD</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+body{background:#0a0a0a;color:#fff;padding:20px}
+h1{color:#00d4ff;text-align:center;margin-bottom:20px}
+.card{background:#141414;border:1px solid #222;border-radius:16px;padding:20px;margin-bottom:20px}
+input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #333;border-radius:10px;background:#0a0a0a;color:#fff}
+button{padding:10px 20px;border:none;border-radius:8px;background:#00d4ff;color:#000;font-weight:bold;cursor:pointer}
+table{width:100%;border-collapse:collapse;background:#141414;border-radius:12px;overflow:hidden;margin-top:15px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #222;font-size:13px}
+th{background:#1a1a1a;color:#888;text-transform:uppercase;font-size:11px}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold}
+.b-free{background:#6662;color:#aaa;border:1px solid #666}
+.b-ess{background:#00d4ff20;color:#00d4ff;border:1px solid #00d4ff}
+.b-pro{background:#aa00ff20;color:#aa00ff;border:1px solid #aa00ff}
+.b-inst{background:#00ff8820;color:#00ff88;border:1px solid #00ff88}
+</style>
+</head>
+<body>
+
+<div class="card" id="loginBox">
+  <h2>🔐 Connexion Admin</h2>
+  <input type="password" id="adminPass" placeholder="Mot de passe">
+  <button onclick="login()">Entrer</button>
+</div>
+
+<div id="dashboard" class="hidden">
+  <h1>📊 ProfCheck-IA - SADIK-FOUAD</h1>
+  
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px">
+    <div class="card"><h3>Total users</h3><p id="total" style="font-size:28px;color:#00d4ff">0</p></div>
+    <div class="card"><h3>Abonnés payants</h3><p id="paid" style="font-size:28px;color:#00ff88">0</p></div>
+    <div class="card"><h3>Revenus estimés</h3><p id="revenue" style="font-size:28px;color:#aa00ff">$0</p></div>
+  </div>
+
+  <div class="card">
+    <h3>👥 Gestion des utilisateurs</h3>
+    <table>
+      <thead><tr><th>Nom</th><th>Email</th><th>Niveau</th><th>Matière</th><th>Plan actuel</th><th>Action</th></tr></thead>
+      <tbody id="usersTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = 'profchek2026'; // CHANGE CE MOT DE PASSE
+
+function login(){
+  const p = document.getElementById('adminPass').value;
+  if(p === ADMIN_PASSWORD){
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    loadUsers();
+  } else alert('Mot de passe incorrect');
+}
+
+async function loadUsers(){
+  const r = await fetch('/api/admin/users',{headers:{'Authorization':'Bearer '+ADMIN_PASSWORD}});
+  const users = await r.json();
+  
+  document.getElementById('total').textContent = users.length;
+  const paid = users.filter(u=>u.plan!=='free');
+  document.getElementById('paid').textContent = paid.length;
+  
+  const rev = paid.reduce((sum,u)=>{
+    if(u.plan==='essential') return sum+17;
+    if(u.plan==='pro') return sum+36;
+    if(u.plan==='institution') return sum+79;
+    return sum;
+  },0);
+  document.getElementById('revenue').textContent = '$'+rev;
+  
+  document.getElementById('usersTable').innerHTML = users.map(u=>`
+    <tr>
+      <td>${u.fullName}</td>
+      <td>${u.email}</td>
+      <td>${u.professionLevel}</td>
+      <td>${u.subject}</td>
+      <td><span class="badge b-${u.plan}">${u.plan}</span></td>
+      <td>
+        <select onchange="setPlan('${u.id}',this.value)">
+          <option value="free" ${u.plan==='free'?'selected':''}>Free</option>
+          <option value="essential" ${u.plan==='essential'?'selected':''}>Essential $17</option>
+          <option value="pro" ${u.plan==='pro'?'selected':''}>Pro $36</option>
+          <option value="institution" ${u.plan==='institution'?'selected':''}>Institution $79</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function setPlan(uid,plan){
+  await fetch('/api/admin/set-plan',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN_PASSWORD},
+    body:JSON.stringify({userId:uid,plan:plan})
+  });
+  alert('Plan mis à jour : '+plan);
+  loadUsers();
+}
+</script>
+</body>
+</html>
 
