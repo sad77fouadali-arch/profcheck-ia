@@ -1,35 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfCheck-IA | SADIK-FOUAD</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+body{background:#0a0a0a;color:#fff;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #222;margin-bottom:30px}
+.logo{font-size:22px;font-weight:bold;color:#00d4ff}
+.nav{display:flex;gap:15px;align-items:center}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px}
+.btn-primary{background:#00d4ff;color:#000}
+.btn-outline{background:transparent;border:1px solid #444;color:#fff}
+.btn-whatsapp{background:#25D366;color:#fff}
+.card{background:#141414;border:1px solid #222;border-radius:16px;padding:24px;margin-bottom:20px}
+h2{color:#fff;margin-bottom:15px;font-size:20px}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #333;border-radius:10px;background:#0a0a0a;color:#fff;font-size:15px}
+textarea{min-height:120px;resize:vertical}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}
+.plan-card{border:2px solid #333;border-radius:16px;padding:20px;text-align:center;transition:.3s}
+.plan-card:hover{border-color:#00d4ff}
+.plan-card.featured{border-color:#00d4ff;background:#00d4ff08}
+.price{font-size:32px;font-weight:bold;color:#00d4ff;margin:10px 0}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;background:#00ff8820;color:#00ff88;border:1px solid #00ff88}
+.hidden{display:none !important}
+.tabs{display:flex;gap:10px;margin-bottom:20px;border-bottom:1px solid #222;padding-bottom:10px}
+.tab{cursor:pointer;padding:8px 16px;border-radius:8px;color:#888}
+.tab.active{background:#1a1a1a;color:#fff}
+.chapter-item{background:#1a1a1a;padding:12px;border-radius:10px;margin-bottom:8px;border-left:3px solid #00d4ff}
+#userInfo{font-size:13px;color:#888}
+.progress-bar{height:6px;background:#222;border-radius:3px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;background:#00d4ff;border-radius:3px;transition:width .3s}
+.lock-box{text-align:center;padding:20px;background:#1a1a1a;border-radius:12px;border:1px solid #333}
+.lock-box p{color:#888;font-size:14px;line-height:1.6}
+.lock-title{color:#ffaa00;margin-bottom:10px;font-size:16px}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <div class="logo">&#128269; ProfCheck-IA</div>
+  <div class="nav" id="navArea">
+    <button class="btn btn-outline" onclick="showAuth()">Connexion</button>
+  </div>
+</header>
+
+<div id="authModal" class="card hidden">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Connexion</div>
+    <div class="tab" onclick="switchTab('register')">Inscription</div>
+  </div>
+  <div id="loginForm">
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPass" placeholder="Mot de passe">
+    <button class="btn btn-primary" onclick="login()" style="width:100%">Se connecter</button>
+  </div>
+  <div id="registerForm" class="hidden">
+    <input type="text" id="regName" placeholder="Nom complet">
+    <input type="email" id="regEmail" placeholder="Email">
+    <input type="password" id="regPass" placeholder="Mot de passe">
+    <select id="regLevel">
+      <option value="">Niveau professionnel</option>
+      <option value="primaire">Primaire</option>
+      <option value="college">College</option>
+      <option value="lycee">Lycee</option>
+      <option value="universite">Universite</option>
+      <option value="autre">Autre</option>
+    </select>
+    <input type="text" id="regSubject" placeholder="Matiere enseignee">
+    <input type="text" id="regSchool" placeholder="Nom de l etablissement">
+    <button class="btn btn-primary" onclick="register()" style="width:100%">Creer mon compte</button>
+  </div>
+</div>
+
+<div id="dashboard" class="hidden">
+  <div id="userInfo"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0">
+    <div class="card">
+      <h3>&#128202; Analyses</h3>
+      <p id="statsAnalyses">Chargement...</p>
+    </div>
+    <div class="card">
+      <h3>&#128218; Programmes</h3>
+      <p id="statsProgs">Chargement...</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128269; Detection de triche par IA</h2>
+    <textarea id="devoirText" placeholder="Collez le devoir de l eleve ici..."></textarea>
+    <button class="btn btn-primary" onclick="analyze()" id="analyzeBtn">Analyser</button>
+    <div id="analyzeResult" style="margin-top:15px"></div>
+    <div id="upgradeBox" class="hidden" style="margin-top:20px;text-align:center;padding:20px;background:#1a1a1a;border-radius:12px">
+      <p style="color:#ffaa00;margin-bottom:10px">&#128274; Limite gratuite atteinte</p>
+      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20souscrire%20a%20un%20abonnement%20ProfCheck-IA." class="btn btn-whatsapp">&#128241; S abonner par WhatsApp</a>
+      <p style="color:#666;margin-top:10px;font-size:12px">Reponse rapide par SADIK-FOUAD</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128197; Mes Programmes (9 mois)</h2>
+    <div id="programmeForm" class="hidden">
+      <input type="text" id="progTitle" placeholder="Titre (ex: Math 3eme)">
+      <input type="text" id="progLevel" placeholder="Niveau classe">
+      <input type="date" id="progStart">
+      <button class="btn btn-primary" onclick="createProgramme()" style="width:100%">Creer le programme</button>
+    </div>
+    <div id="programmeList"></div>
+  </div>
+
+  <div class="card">
+    <h2>&#128214; Travail de demain</h2>
+    <div id="dailyPlan">Chargement...</div>
+  </div>
+
+  <button class="btn btn-outline" onclick="logout()" style="margin-top:20px">Deconnexion</button>
+</div>
+
+<div id="offers" class="hidden">
+  <h2 style="text-align:center;margin:30px 0">Choisissez votre formule</h2>
+  <div class="grid">
+    <div class="plan-card">
+      <h3>Essential</h3>
+      <div class="price">$17<span style="font-size:14px;color:#888">/mois</span></div>
+      <p>&#10003; Analyses illimitees<br>&#10003; 0 programme sur 9 mois<br>&#10003; Detection IA avancee</p>
+      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20l%20abonnement%20ESSENTIAL%20%2417%20ProfCheck-IA" class="btn btn-whatsapp" style="display:block;margin-top:15px">Choisir Essential</a>
+    </div>
+    <div class="plan-card featured">
+      <h3>Pro</h3>
+      <div class="price">$36<span style="font-size:14px;color:#888">/mois</span></div>
+      <p>&#10003; Analyses illimitees<br>&#10003; 3 programmes sur 9 mois<br>&#10003; Assistant pedagogique</p>
+      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20l%20abonnement%20PRO%20%2436%20ProfCheck-IA" class="btn btn-whatsapp" style="display:block;margin-top:15px">Choisir Pro</a>
+    </div>
+    <div class="plan-card">
+      <h3>Institution</h3>
+      <div class="price">$79<span style="font-size:14px;color:#888">/mois</span></div>
+      <p>&#10003; Tout illimite<br>&#10003; Programmes illimites<br>&#10003; Support WhatsApp prioritaire</p>
+      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20l%20abonnement%20INSTITUTION%20%2479%20ProfCheck-IA" class="btn btn-whatsapp" style="display:block;margin-top:15px">Choisir Institution</a>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+let currentUser = null;
+
+fetch('/api/me').then(r => r.json()).then(d => {
+  if (d.user) { currentUser = d.user; showDashboard(d); }
+  else { document.getElementById('offers').classList.remove('hidden'); }
+});
+
+function showAuth(){document.getElementById('authModal').classList.remove('hidden')}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('loginForm').classList.toggle('hidden', t!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', t!=='register');
+}
+
+async function register(){
+  const body = {
+    fullName: document.getElementById('regName').value,
+    email: document.getElementById('regEmail').value,
+    password: document.getElementById('regPass').value,
+    professionLevel: document.getElementById('regLevel').value,
+    subject: document.getElementById('regSubject').value,
+    schoolName: document.getElementById('regSchool').value
+  };
+  const r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json();
+  if(d.success){location.reload();}
+  else{alert(d.error);}
+}
+
+async function login(){
+  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    email: document.getElementById('loginEmail').value,
+    password: document.getElementById('loginPass').value
+  })});
+  const d = await r.json();
+  if(d.success){location.reload();}
+  else{alert(d.error);}
+}
+
+function logout(){fetch('/api/logout').then(()=>location.reload());}
+
 function showDashboard(data){
   document.getElementById('authModal').classList.add('hidden');
   document.getElementById('offers').classList.add('hidden');
   document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('navArea').innerHTML = `<span style="color:#888">${data.user.fullName}</span>`;
-  document.getElementById('userInfo').innerHTML = `👤 ${data.user.fullName} • 🎓 ${data.user.professionLevel} • 📖 ${data.user.subject} • 💎 Plan: ${data.user.plan}`;
-  document.getElementById('statsAnalyses').innerHTML = `${data.analysesCount} analyses réalisées<br><small>${data.remainingAnalyses} restantes</small>`;
-  document.getElementById('statsProgs').innerHTML = `${data.programmesCount} programme(s)<br><small>Max: ${data.maxProgrammes}</small>`;
+  document.getElementById('navArea').innerHTML = '<span style="color:#888">'+data.user.fullName+'</span>';
+  document.getElementById('userInfo').innerHTML = '&#128100; '+data.user.fullName+' &#8226; &#127891; '+data.user.professionLevel+' &#8226; &#128214; '+data.user.subject+' &#8226; &#128142; Plan: '+data.user.plan;
+  document.getElementById('statsAnalyses').innerHTML = data.analysesCount+' analyses realisees<br><small>'+data.remainingAnalyses+' restantes</small>';
+  document.getElementById('statsProgs').innerHTML = data.programmesCount+' programme(s)<br><small>Max: '+data.maxProgrammes+'</small>';
   
   const plan = data.user.plan;
   
   if (plan === 'free' || plan === 'essential') {
     document.getElementById('programmeForm').classList.add('hidden');
-    document.getElementById('programmeList').innerHTML = `
-      <div style="text-align:center;padding:20px;background:#1a1a1a;border-radius:12px;border:1px solid #333;">
-        <p style="color:#ffaa00;margin-bottom:10px;font-size:16px;">🔒 Assistant Programme 9 mois</p>
-        <p style="color:#888;font-size:14px;line-height:1.6;">
-          ${plan === 'free' 
-            ? 'Passez à l\'abonnement PRO ($36) pour débloquer la planification intelligente de vos programmes scolaires sur 9 mois.' 
-            : 'Votre abonnement Essential ($17) ne comprend pas l\'assistant de programmes. Passez à PRO ($36) pour planifier vos 9 mois de cours.'}
-        </p>
-        <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20passer%20%C3%A0%20l%27abonnement%20PRO%20%2436%20ProfCheck-IA" 
-           style="display:inline-block;margin-top:15px;padding:10px 20px;border-radius:50px;background:#25D366;color:#fff;text-decoration:none;font-weight:bold;">
-          📱 Passer à PRO
-        </a>
-      </div>
-    `;
-    document.getElementById('dailyPlan').innerHTML = `
-      <div style="text-align:center;padding:15px;">
-        <p style="color:#666;">🔒 L'assistant "Travail de demain" est disponible à partir de l'abonnement PRO ($36)</p>
-      </div>
-    `;
+    document.getElementById('programmeList').innerHTML = 
+      '<div class="lock-box">'+
+        '<p class="lock-title">&#128274; Assistant Programme 9 mois</p>'+
+        '<p>'+(plan === 'free' 
+          ? 'Passez a l abonnement PRO ($36) pour debloquer la planification intelligente de vos programmes scolaires sur 9 mois.'
+          : 'Votre abonnement Essential ($17) ne comprend pas l assistant de programmes. Passez a PRO ($36) pour planifier vos 9 mois de cours.')+
+        '</p>'+
+        '<a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20passer%20a%20l%20abonnement%20PRO%20%2436%20ProfCheck-IA" '+
+        'style="display:inline-block;margin-top:15px;padding:10px 20px;border-radius:50px;background:#25D366;color:#fff;text-decoration:none;font-weight:bold;">&#128241; Passer a PRO</a>'+
+      '</div>';
+    document.getElementById('dailyPlan').innerHTML = 
+      '<div style="text-align:center;padding:15px;">'+
+        '<p style="color:#666;">&#128274; L assistant Travail de demain est disponible a partir de l abonnement PRO ($36)</p>'+
+      '</div>';
   } else {
     if(data.canCreateProgramme) {
       document.getElementById('programmeForm').classList.remove('hidden');
@@ -40,3 +227,66 @@ function showDashboard(data){
     loadDailyPlan();
   }
 }
+
+async function analyze(){
+  const btn = document.getElementById('analyzeBtn');
+  const txt = document.getElementById('devoirText').value;
+  if(!txt){alert('Collez un texte');return;}
+  btn.disabled = true; btn.textContent = 'Analyse en cours...';
+  
+  const r = await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:txt})});
+  const d = await r.json();
+  
+  if(d.error){
+    document.getElementById('upgradeBox').classList.remove('hidden');
+    document.getElementById('analyzeResult').innerHTML = '<p style="color:#ff4444">'+d.message+'</p>';
+  } else {
+    document.getElementById('analyzeResult').innerHTML = '<div class="chapter-item"><strong>Resultat :</strong> Score IA '+d.result.score+'%<br>'+(d.result.iaDetected?'&#9888; Texte suspect':'&#9989; Texte authentique')+'</div>';
+    setTimeout(()=>location.reload(),1500);
+  }
+  btn.disabled = false; btn.textContent = 'Analyser';
+}
+
+async function createProgramme(){
+  const body = {
+    title: document.getElementById('progTitle').value,
+    level: document.getElementById('progLevel').value,
+    subject: currentUser ? currentUser.subject : '',
+    startDate: document.getElementById('progStart').value
+  };
+  const r = await fetch('/api/programmes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json();
+  if(d.success){alert('Programme cree sur 9 mois !'); location.reload();}
+  else{alert(d.error);}
+}
+
+async function loadProgrammes(){
+  const r = await fetch('/api/programmes');
+  const list = await r.json();
+  const div = document.getElementById('programmeList');
+  if(!list.length){div.innerHTML='<p style="color:#666">Aucun programme. Creez votre premier programme de 9 mois !</p>';return;}
+  div.innerHTML = list.map(p=>
+    '<div class="chapter-item">'+
+      '<strong>'+p.title+'</strong> &mdash; '+p.level+'<br>'+
+      '<small style="color:#888">Du '+new Date(p.startDate).toLocaleDateString('fr-FR')+' au '+new Date(p.endDate).toLocaleDateString('fr-FR')+'</small>'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>'+
+    '</div>'
+  ).join('');
+}
+
+async function loadDailyPlan(){
+  const r = await fetch('/api/daily-plan');
+  const d = await r.json();
+  document.getElementById('dailyPlan').innerHTML = d.chapter ? 
+    '<div class="chapter-item">'+
+      '<strong>'+d.programme.title+'</strong><br>'+
+      '&#128197; Semaine '+d.weekNumber+'<br>'+
+      '&#128214; Chapitre : '+d.chapter.title+'<br>'+
+      '<small>'+d.suggestion+'</small>'+
+    '</div>' : 
+    '<p style="color:#666">'+d.message+'</p>';
+}
+</script>
+</body>
+</html>
+
