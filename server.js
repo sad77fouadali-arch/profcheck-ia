@@ -66,7 +66,7 @@ const PLANS = {
   institution: { maxAnalyses: 9999, maxProgrammes: 99, name: 'Institution ($79)' }
 };
 
-const ADMIN_PASSWORD = 'profchek2026'; // CHANGE CE MOT DE PASSE APRES
+const ADMIN_PASSWORD = 'profchek2026'; // SadikFouad1996!Prof
 
 // ============ MIDDLEWARES ============
 function auth(req, res, next) {
