@@ -61,7 +61,8 @@ db.serialize(() => {
 // ============ CONFIGURATION PLANS ============
 const PLANS = {
   free: { maxAnalyses: 3, maxProgrammes: 0, name: 'Gratuit' },
-  essential: { maxAnalyses: 9999, maxProgrammes: 1, name: 'Essential ($17)' },
+  essential: { maxAnalyses: 9999, maxProgrammes: 0, name: 'Essential ($17)' },
+
   pro: { maxAnalyses: 9999, maxProgrammes: 3, name: 'Pro ($36)' },
   institution: { maxAnalyses: 9999, maxProgrammes: 99, name: 'Institution ($79)' }
 };
