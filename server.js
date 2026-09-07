@@ -309,3 +309,4 @@ Règles : Sois concis, professionnel, chaleureux. Réponds dans la langue de l'u
 // ============ LANCEMENT ============
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`ProfCheck-IA running on port ${PORT}`));
+
