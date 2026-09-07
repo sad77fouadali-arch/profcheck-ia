@@ -5,8 +5,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Database = require('better-sqlite3');
 const path = require('path');
+const { open } = require('sqlite');
+const sqlite3 = require('sqlite3');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,35 +29,43 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de données SQLite
-const db = new Database(path.join(__dirname, 'profcheck.db'));
+// Base de données SQLite (async)
+let db;
 
-// Initialisation des tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT,
-    role TEXT DEFAULT 'teacher',
-    is_premium INTEGER DEFAULT 0,
-    free_uses INTEGER DEFAULT 3,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+async function initDatabase() {
+  db = await open({
+    filename: path.join(__dirname, 'profcheck.db'),
+    driver: sqlite3.Database
+  });
 
-  CREATE TABLE IF NOT EXISTS analyses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    title TEXT,
-    text_content TEXT,
-    ai_probability REAL,
-    human_probability REAL,
-    result TEXT,
-    details TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-`);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      name TEXT,
+      role TEXT DEFAULT 'teacher',
+      is_premium INTEGER DEFAULT 0,
+      free_uses INTEGER DEFAULT 3,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS analyses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT,
+      text_content TEXT,
+      ai_probability REAL,
+      human_probability REAL,
+      result TEXT,
+      details TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+}
 
 // ==========================================
 // MIDDLEWARE AUTH
@@ -94,11 +103,12 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Email et mot de passe requis' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = db.prepare(
-      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)'
-    ).run(email, hashedPassword, name || null);
+    const result = await db.run(
+      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
+      email, hashedPassword, name || null
+    );
     
-    res.json({ success: true, message: 'Compte créé avec succès', userId: result.lastInsertRowid });
+    res.json({ success: true, message: 'Compte créé avec succès', userId: result.lastID });
   } catch (err) {
     if (err.message.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'Cet email est déjà utilisé' });
@@ -111,7 +121,7 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = await db.get('SELECT * FROM users WHERE email = ?', email);
     
     if (!user || !await bcrypt.compare(password, user.password)) {
       return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
@@ -140,12 +150,17 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Profil utilisateur
-app.get('/api/me', authenticate, (req, res) => {
-  const user = db.prepare(
-    'SELECT id, email, name, role, is_premium, free_uses, created_at FROM users WHERE id = ?'
-  ).get(req.user.id);
-  if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
-  res.json({ ...user, is_premium: !!user.is_premium });
+app.get('/api/me', authenticate, async (req, res) => {
+  try {
+    const user = await db.get(
+      'SELECT id, email, name, role, is_premium, free_uses, created_at FROM users WHERE id = ?',
+      req.user.id
+    );
+    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    res.json({ ...user, is_premium: !!user.is_premium });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // ==========================================
@@ -155,7 +170,7 @@ app.get('/api/me', authenticate, (req, res) => {
 // Analyser un texte
 app.post('/api/analyze', authenticate, async (req, res) => {
   try {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const user = await db.get('SELECT * FROM users WHERE id = ?', req.user.id);
     
     // Vérifier les limites
     if (!user.is_premium && user.free_uses <= 0) {
@@ -193,10 +208,9 @@ app.post('/api/analyze', authenticate, async (req, res) => {
                    aiScore > 35 ? 'Mixte (partiellement IA)' : 'Probablement écrit par un humain';
     
     // Sauvegarder l'analyse
-    db.prepare(
+    await db.run(
       `INSERT INTO analyses (user_id, title, text_content, ai_probability, human_probability, result, details)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).run(
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       user.id,
       title || 'Analyse sans titre',
       text.substring(0, 5000),
@@ -208,10 +222,10 @@ app.post('/api/analyze', authenticate, async (req, res) => {
     
     // Décrémenter les essais gratuits
     if (!user.is_premium) {
-      db.prepare('UPDATE users SET free_uses = free_uses - 1 WHERE id = ?').run(user.id);
+      await db.run('UPDATE users SET free_uses = free_uses - 1 WHERE id = ?', user.id);
     }
     
-    const updatedUser = db.prepare('SELECT free_uses, is_premium FROM users WHERE id = ?').get(user.id);
+    const updatedUser = await db.get('SELECT free_uses, is_premium FROM users WHERE id = ?', user.id);
     
     res.json({
       aiProbability: Math.round(aiScore),
@@ -233,11 +247,12 @@ app.post('/api/analyze', authenticate, async (req, res) => {
 });
 
 // Historique des analyses
-app.get('/api/analyses', authenticate, (req, res) => {
+app.get('/api/analyses', authenticate, async (req, res) => {
   try {
-    const analyses = db.prepare(
-      'SELECT id, title, ai_probability, human_probability, result, created_at FROM analyses WHERE user_id = ? ORDER BY created_at DESC'
-    ).all(req.user.id);
+    const analyses = await db.all(
+      'SELECT id, title, ai_probability, human_probability, result, created_at FROM analyses WHERE user_id = ? ORDER BY created_at DESC',
+      req.user.id
+    );
     res.json(analyses);
   } catch (err) {
     res.status(500).json({ error: 'Erreur lors du chargement de l\'historique' });
@@ -245,9 +260,9 @@ app.get('/api/analyses', authenticate, (req, res) => {
 });
 
 // Détails d'une analyse
-app.get('/api/analyses/:id', authenticate, (req, res) => {
+app.get('/api/analyses/:id', authenticate, async (req, res) => {
   try {
-    const analysis = db.prepare('SELECT * FROM analyses WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+    const analysis = await db.get('SELECT * FROM analyses WHERE id = ? AND user_id = ?', req.params.id, req.user.id);
     if (!analysis) return res.status(404).json({ error: 'Analyse non trouvée' });
     res.json(analysis);
   } catch (err) {
@@ -270,11 +285,11 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // Liste des utilisateurs (admin)
-app.get('/api/admin/users', authenticate, requireAdmin, (req, res) => {
+app.get('/api/admin/users', authenticate, requireAdmin, async (req, res) => {
   try {
-    const users = db.prepare(
+    const users = await db.all(
       'SELECT id, email, name, role, is_premium, free_uses, created_at FROM users ORDER BY created_at DESC'
-    ).all();
+    );
     res.json(users.map(u => ({ ...u, is_premium: !!u.is_premium })));
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -282,10 +297,10 @@ app.get('/api/admin/users', authenticate, requireAdmin, (req, res) => {
 });
 
 // Activer un abonnement premium (admin)
-app.post('/api/admin/activate', authenticate, requireAdmin, (req, res) => {
+app.post('/api/admin/activate', authenticate, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.body;
-    db.prepare('UPDATE users SET is_premium = 1, free_uses = 999 WHERE id = ?').run(userId);
+    await db.run('UPDATE users SET is_premium = 1, free_uses = 999 WHERE id = ?', userId);
     res.json({ success: true, message: 'Abonnement activé avec succès' });
   } catch (err) {
     res.status(500).json({ error: 'Erreur lors de l\'activation' });
@@ -293,10 +308,10 @@ app.post('/api/admin/activate', authenticate, requireAdmin, (req, res) => {
 });
 
 // Désactiver un abonnement (admin)
-app.post('/api/admin/deactivate', authenticate, requireAdmin, (req, res) => {
+app.post('/api/admin/deactivate', authenticate, requireAdmin, async (req, res) => {
   try {
     const { userId } = req.body;
-    db.prepare('UPDATE users SET is_premium = 0 WHERE id = ?').run(userId);
+    await db.run('UPDATE users SET is_premium = 0 WHERE id = ?', userId);
     res.json({ success: true, message: 'Abonnement désactivé' });
   } catch (err) {
     res.status(500).json({ error: 'Erreur' });
@@ -367,8 +382,13 @@ app.get('/', (req, res) => {
 // ==========================================
 // DÉMARRAGE DU SERVEUR
 // ==========================================
-app.listen(PORT, () => {
-  console.log(`✅ ProfCheck-IA server running on port ${PORT}`);
-  console.log(`📁 Database: ${path.join(__dirname, 'profcheck.db')}`);
+initDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ ProfCheck-IA server running on port ${PORT}`);
+    console.log(`📁 Database: ${path.join(__dirname, 'profcheck.db')}`);
+  });
+}).catch(err => {
+  console.error('❌ Database initialization failed:', err);
+  process.exit(1);
 });
 
