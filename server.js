@@ -62,13 +62,10 @@ db.serialize(() => {
 const PLANS = {
   free: { maxAnalyses: 3, maxProgrammes: 0, name: 'Gratuit' },
   essential: { maxAnalyses: 9999, maxProgrammes: 0, name: 'Essential ($17)' },
-
   pro: { maxAnalyses: 9999, maxProgrammes: 3, name: 'Pro ($36)' },
   institution: { maxAnalyses: 9999, maxProgrammes: 99, name: 'Institution ($79)' }
 };
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-
 
 // ============ MIDDLEWARES ============
 function auth(req, res, next) {
@@ -153,7 +150,6 @@ app.post('/api/analyze', auth, (req, res) => {
     
     const id = crypto.randomUUID();
     const { content } = req.body;
-    // Simulation d'analyse (remplace par ton vrai appel OpenAI)
     const mockResult = { score: Math.floor(Math.random() * 100), iaDetected: Math.random() > 0.5 };
     
     db.run('INSERT INTO analyses (id, userId, content, result, createdAt) VALUES (?, ?, ?, ?, ?)',
@@ -252,8 +248,64 @@ app.post('/api/admin/set-plan', requireAdmin, (req, res) => {
   });
 });
 
+// ========== ASSISTANT IA PROFCheck-IA ==========
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, history = [] } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message requis' });
+    }
+
+    const systemPrompt = `Tu es ProfCheck-IA Assistant, un assistant pédagogique intelligent pour enseignants et professeurs du primaire au secondaire. 
+Tu aides à :
+- Rédiger des e-mails professionnels aux parents, élèves ou collègues
+- Résumer des textes, articles ou rapports
+- Traduire des documents (français, anglais, arabe, etc.)
+- Répondre à des questions pédagogiques et administratives
+- Proposer des idées de devoirs, contrôles ou séquences
+
+Règles : Sois concis, professionnel, chaleureux. Réponds dans la langue de l'utilisateur. Si tu rédiges un e-mail, propose un objet clair et un texte prêt à l'envoi.`;
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history,
+      { role: 'user', content: message }
+    ];
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Groq error:', data);
+      return res.status(500).json({ error: 'Erreur du modèle IA' });
+    }
+
+    const reply = data.choices[0].message.content;
+    res.json({ reply });
+
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+// ========== FIN ASSISTANT IA ==========
+
 // ============ LANCEMENT ============
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`ProfCheck-IA running on port ${PORT}`));
-
-
