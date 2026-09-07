@@ -11,11 +11,17 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'profcheck-secret-key-2026';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'profcheck2026';
-const GROQ_API_KEY const GROQ_API_KEY = process.env.GROQ_API_KEY;
+// Configuration (tout vient des variables d'environnement)
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
+// Vérification des variables obligatoires
+if (!JWT_SECRET || !ADMIN_PASSWORD || !GROQ_API_KEY) {
+  console.error('❌ ERREUR : Variables d\'environnement manquantes !');
+  console.error('   JWT_SECRET, ADMIN_PASSWORD, GROQ_API_KEY sont requises.');
+  process.exit(1);
+}
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -364,5 +370,5 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ ProfCheck-IA server running on port ${PORT}`);
   console.log(`📁 Database: ${path.join(__dirname, 'profcheck.db')}`);
-  console.log(`🔑 Admin auth: ${ADMIN_PASSWORD === 'profcheck2026' ? 'MOT DE PASSE PAR DÉFAUT - CHANGEZ-LE' : 'Configuré'}`);
 });
+
