@@ -1,93 +1,205 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — ProfCheck IA</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
-    body{background:#0f172a;color:#fff;min-height:100vh}
-    .login{position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:50}
-    .login-box{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:32px;width:90%;max-width:320px}
-    .login-box h2{margin-bottom:16px;text-align:center}
-    .login-box input{width:100%;background:#334155;border:1px solid #475569;border-radius:8px;padding:12px;color:#fff;margin-bottom:12px}
-    .login-box button{width:100%;background:#34d399;color:#0f172a;border:none;padding:12px;border-radius:8px;font-weight:600;cursor:pointer}
-    .header{background:#1e293b;border-bottom:1px solid #334155;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
-    .container{max-width:1000px;margin:0 auto;padding:24px}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
-    .card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
-    .card p:first-child{color:#94a3b8;font-size:12px;text-transform:uppercase}
-    .card p:last-child{font-size:28px;font-weight:700;margin-top:4px}
-    .green{color:#34d399}.blue{color:#60a5fa}.amber{color:#fbbf24}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th{background:#334155;padding:12px;text-align:left;color:#94a3b8;font-weight:500}
-    td{padding:12px;border-bottom:1px solid #334155}
-    tr:hover{background:#1e293b}
-    .badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
-    .badge-green{background:rgba(52,211,153,.2);color:#34d399}
-    .badge-gray{background:rgba(148,163,184,.2);color:#94a3b8}
-    .hidden{display:none}
-  </style>
-</head>
-<body>
-  <div class="login" id="loginScreen">
-    <div class="login-box">
-      <h2>🔐 Admin</h2>
-      <input type="password" id="adminPass" placeholder="Mot de passe">
-      <button onclick="login()">Connexion</button>
-      <p id="loginError" style="color:#f87171;font-size:13px;margin-top:8px;text-align:center;display:none">Mot de passe incorrect</p>
+<!-- ========== WIDGET CHAT PROFCheck-IA ========== -->
+<style>
+  #profchat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  #profchat-toggle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+  #profchat-toggle:active { transform: scale(0.95); }
+  #profchat-box {
+    display: none;
+    width: 320px;
+    max-height: 450px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 1px solid #e0e0e0;
+  }
+  #profchat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 14px 16px;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #profchat-header span { font-size: 12px; opacity: 0.9; }
+  #profchat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: #f8f9fa;
+    min-height: 280px;
+    max-height: 320px;
+  }
+  .profchat-msg {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    max-width: 90%;
+    word-wrap: break-word;
+  }
+  .profchat-user {
+    background: #667eea;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .profchat-bot {
+    background: white;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+  }
+  .profchat-bot strong { color: #667eea; }
+  #profchat-input-area {
+    display: flex;
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #eee;
+    gap: 8px;
+  }
+  #profchat-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 14px;
+    outline: none;
+  }
+  #profchat-send {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #profchat-send:disabled { opacity: 0.6; }
+  .profchat-loading {
+    font-style: italic;
+    color: #888;
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+  @media (max-width: 480px) {
+    #profchat-box { width: 90vw; right: 5vw; }
+  }
+</style>
+
+<div id="profchat-widget">
+  <div id="profchat-box">
+    <div id="profchat-header">
+      🤖 ProfCheck Assistant <span>IA pour enseignants</span>
+    </div>
+    <div id="profchat-messages">
+      <div class="profchat-msg profchat-bot">
+        <strong>Bonjour !</strong><br>
+        Je suis ton assistant pédagogique. Je peux rédiger des e-mails, résumer des textes, traduire ou répondre à tes questions. Comment puis-je t'aider ?
+      </div>
+    </div>
+    <div id="profchat-input-area">
+      <input type="text" id="profchat-input" placeholder="Ex: Rédige un e-mail aux parents...">
+      <button id="profchat-send" onclick="sendChat()">Envoyer</button>
     </div>
   </div>
+  <button id="profchat-toggle" onclick="toggleChat()">💬</button>
+</div>
 
-  <div id="dashboard" class="hidden">
-    <div class="header">
-      <div><strong>ProfCheck IA</strong> <span style="color:#94a3b8;font-size:13px">— Tableau de bord</span></div>
-      <button onclick="logout()" style="background:none;border:none;color:#94a3b8;cursor:pointer">Déconnexion</button>
-    </div>
-    <div class="container">
-      <div class="grid">
-        <div class="card"><p>Utilisateurs total</p><p id="statTotal" class="green">--</p></div>
-        <div class="card"><p>Comptes Premium</p><p id="statPremium" class="green">--</p></div>
-        <div class="card"><p>Comptes Gratuits</p><p id="statFree" class="blue">--</p></div>
-        <div class="card"><p>Taux conversion</p><p id="statRate" class="amber">--</p></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <strong>Utilisateurs récents</strong>
-          <button onclick="loadStats()" style="background:#334155;border:none;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">🔄 Actualiser</button>
-        </div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr><th>Session ID</th><th>Essais</th><th>Statut</th></tr></thead>
-            <tbody id="usersTable"><tr><td colspan="3" style="text-align:center;color:#64748b;padding:24px">Chargement...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const API = location.origin, PASS = 'profcheck2024';
-    function login(){if(document.getElementById('adminPass').value===PASS){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('dashboard').classList.remove('hidden');loadStats();}else{document.getElementById('loginError').style.display='block';}}
-    function logout(){document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('dashboard').classList.add('hidden');document.getElementById('adminPass').value='';}
-    async function loadStats(){
-      try{
-        const r=await fetch(API+'/api/admin/stats',{headers:{'Authorization':'Bearer '+PASS},credentials:'include'});
-        const j=await r.json();
-        if(j.success){
-          const d=j.data;
-          document.getElementById('statTotal').textContent=d.totalUsers;
-          document.getElementById('statPremium').textContent=d.premiumUsers;
-          document.getElementById('statFree').textContent=d.freeUsers;
-          document.getElementById('statRate').textContent=d.totalUsers?((d.premiumUsers/d.totalUsers)*100).toFixed(1)+'%':'0%';
-          const tbody=document.getElementById('usersTable');
-          if(d.recentUsers&&d.recentUsers.length){
-            tbody.innerHTML=d.recentUsers.map(u=>`<tr><td style="font-family:monospace;color:#64748b;font-size:12px">${u.session_id.substring(0,20)}...</td><td>${u.count}/3</td><td>${u.premium?'<span class="badge badge-green">Premium</span>':'<span class="badge badge-gray">Gratuit</span>'}</td></tr>`).join('');
-          }else{tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:#64748b;padding:24px">Aucun utilisateur</td></tr>';}
-        }
-      }catch(e){alert('Erreur de chargement');}
+<script>
+  let chatHistory = [];
+  
+  function toggleChat() {
+    const box = document.getElementById('profchat-box');
+    box.style.display = box.style.display === 'flex' ? 'none' : 'flex';
+    if (box.style.display === 'flex') document.getElementById('profchat-input').focus();
+  }
+  
+  document.getElementById('profchat-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') sendChat();
+  });
+  
+  async function sendChat() {
+    const input = document.getElementById('profchat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    
+    const messagesDiv = document.getElementById('profchat-messages');
+    const sendBtn = document.getElementById('profchat-send');
+    
+    messagesDiv.innerHTML += `<div class="profchat-msg profchat-user">${escapeHtml(msg)}</div>`;
+    input.value = '';
+    sendBtn.disabled = true;
+    
+    const loadingId = 'load-' + Date.now();
+    messagesDiv.innerHTML += `<div id="${loadingId}" class="profchat-loading">L'assistant réfléchit...</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, history: chatHistory })
+      });
+      
+      const data = await res.json();
+      document.getElementById(loadingId).remove();
+      
+      if (data.reply) {
+        messagesDiv.innerHTML += `<div class="profchat-msg profchat-bot">${formatReply(data.reply)}</div>`;
+        chatHistory.push({ role: 'user', content: msg });
+        chatHistory.push({ role: 'assistant', content: data.reply });
+        if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+      } else {
+        messagesDiv.innerHTML += `<div class="profchat-msg profchat-bot" style="color:red">Erreur de réponse. Réessaie.</div>`;
+      }
+    } catch (err) {
+      document.getElementById(loadingId).remove();
+      messagesDiv.innerHTML += `<div class="profchat-msg profchat-bot" style="color:red">Problème de connexion.</div>`;
     }
-  </script>
+    
+    sendBtn.disabled = false;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+  
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  function formatReply(text) {
+    return escapeHtml(text).replace(/\n/g, '<br>');
+  }
+</script>
+<!-- ========== FIN WIDGET CHAT ========== -->
 </body>
 </html>
+
 
