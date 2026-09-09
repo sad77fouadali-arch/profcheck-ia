@@ -3,290 +3,430 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProfCheck-IA | SADIK-FOUAD</title>
+<title>ProfCheck-IA | Detection de triche par IA pour enseignants</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-body{background:#0a0a0a;color:#fff;min-height:100vh}
-.container{max-width:900px;margin:0 auto;padding:20px}
-header{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #222;margin-bottom:30px}
-.logo{font-size:22px;font-weight:bold;color:#00d4ff}
-.nav{display:flex;gap:15px;align-items:center}
-.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px}
-.btn-primary{background:#00d4ff;color:#000}
-.btn-outline{background:transparent;border:1px solid #444;color:#fff}
+:root{--primary:#00d4ff;--primary-dark:#0099cc;--bg:#0a0e1a;--bg-card:#111827;--bg-light:#1e293b;--text:#f1f5f9;--muted:#94a3b8;--border:#334155;--success:#22c55e;--danger:#ef4444;--warning:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+header{background:rgba(10,14,26,.95);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+nav{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;max-width:1100px;margin:0 auto}
+.logo{font-size:20px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
+.badge-premium{background:var(--success);color:#fff;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:700}
+.badge-free{background:var(--warning);color:#000;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:700}
+.btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:.2s}
+.btn-primary{background:var(--primary);color:#000}
+.btn-primary:hover{background:var(--primary-dark);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--primary)}
 .btn-whatsapp{background:#25D366;color:#fff}
-.card{background:#141414;border:1px solid #222;border-radius:16px;padding:24px;margin-bottom:20px}
-h2{color:#fff;margin-bottom:15px;font-size:20px}
-input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #333;border-radius:10px;background:#0a0a0a;color:#fff;font-size:15px}
-textarea{min-height:120px;resize:vertical}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}
-.plan-card{border:2px solid #333;border-radius:16px;padding:20px;text-align:center;transition:.3s}
-.plan-card:hover{border-color:#00d4ff}
-.plan-card.featured{border-color:#00d4ff;background:#00d4ff08}
-.price{font-size:32px;font-weight:bold;color:#00d4ff;margin:10px 0}
-.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;background:#00ff8820;color:#00ff88;border:1px solid #00ff88}
+.btn-whatsapp:hover{background:#1eb856}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hero{text-align:center;padding:70px 20px 50px}
+.hero h1{font-size:36px;margin-bottom:16px}
+.hero h1 span{color:var(--primary)}
+.hero p{color:var(--muted);font-size:17px;max-width:600px;margin:0 auto 28px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin:30px 0}
+.feature{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
+.feature h3{margin:12px 0 8px;font-size:17px}
+.feature p{color:var(--muted);font-size:14px}
+.f-icon{font-size:34px}
+h2.section-title{text-align:center;font-size:26px;margin:50px 0 8px}
+p.section-sub{text-align:center;color:var(--muted);margin-bottom:10px}
+.plan-card{background:var(--bg-card);border:2px solid var(--border);border-radius:16px;padding:26px;text-align:center;transition:.3s;display:flex;flex-direction:column}
+.plan-card:hover{border-color:var(--primary)}
+.plan-card.featured{border-color:var(--primary);background:linear-gradient(180deg,rgba(0,212,255,.08),var(--bg-card))}
+.plan-name{font-size:18px;font-weight:700;margin-bottom:6px}
+.price{font-size:34px;font-weight:800;color:var(--primary);margin:8px 0}
+.price small{font-size:14px;color:var(--muted);font-weight:400}
+.plan-card ul{list-style:none;margin:16px 0;text-align:left;flex:1}
+.plan-card li{padding:6px 0;color:var(--muted);font-size:14px}
+.plan-card li::before{content:"✓ ";color:var(--success);font-weight:700}
+.tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.tab{cursor:pointer;padding:8px 18px;border-radius:8px;color:var(--muted);font-weight:600}
+.tab.active{background:var(--primary);color:#000}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid var(--border);border-radius:10px;background:var(--bg-light);color:var(--text);font-size:15px;font-family:inherit}
+textarea{min-height:150px;resize:vertical}
+label{font-size:13px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.stat-box{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center}
+.stat-box .num{font-size:26px;font-weight:800;color:var(--primary)}
+.stat-box .lbl{color:var(--muted);font-size:13px}
+.user-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:20px 0}
+.user-info{font-size:14px;color:var(--muted)}
+.score-wrap{background:var(--bg-light);border-radius:12px;padding:16px;margin-top:14px}
+.score-bar{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin:10px 0}
+.score-fill{height:100%;border-radius:6px;transition:width 1s ease}
+.verdict{font-size:19px;font-weight:700;margin:8px 0}
+.verdict.ia{color:var(--danger)}
+.verdict.human{color:var(--success)}
+.verdict.mixte{color:var(--warning)}
+.indicators{color:var(--muted);font-size:14px;margin-top:10px;font-style:italic}
+.conclusion{margin-top:10px;padding:12px;background:rgba(0,212,255,.06);border-left:3px solid var(--primary);border-radius:6px;font-size:14px}
+.fallback-warning{margin-top:10px;padding:10px;background:rgba(245,158,11,.1);border:1px solid var(--warning);border-radius:8px;font-size:13px;color:var(--warning)}
+.history-item{background:var(--bg-light);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--primary);cursor:pointer}
+.history-item:hover{background:var(--border)}
+.history-item .h-title{font-weight:600;font-size:14px}
+.history-item .h-meta{font-size:12px;color:var(--muted)}
 .hidden{display:none !important}
-.tabs{display:flex;gap:10px;margin-bottom:20px;border-bottom:1px solid #222;padding-bottom:10px}
-.tab{cursor:pointer;padding:8px 16px;border-radius:8px;color:#888}
-.tab.active{background:#1a1a1a;color:#fff}
-.chapter-item{background:#1a1a1a;padding:12px;border-radius:10px;margin-bottom:8px;border-left:3px solid #00d4ff}
-#userInfo{font-size:13px;color:#888}
-.progress-bar{height:6px;background:#222;border-radius:3px;margin-top:10px;overflow:hidden}
-.progress-fill{height:100%;background:#00d4ff;border-radius:3px;transition:width .3s}
-.lock-box{text-align:center;padding:20px;background:#1a1a1a;border-radius:12px;border:1px solid #333}
-.lock-box p{color:#888;font-size:14px;line-height:1.6}
-.lock-title{color:#ffaa00;margin-bottom:10px;font-size:16px}
+.upgrade-box{text-align:center;padding:30px;background:linear-gradient(135deg,rgba(0,212,255,.08),var(--bg-card));border:2px solid var(--primary);border-radius:16px;margin:20px 0}
+.upgrade-box h3{margin-bottom:10px}
+.upgrade-box p{color:var(--muted);margin-bottom:16px;font-size:14px}
+.privacy{max-width:700px;margin:40px auto;text-align:center;color:var(--muted);font-size:13px;padding:0 20px}
+footer{text-align:center;padding:30px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:50px}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;z-index:999;display:none;max-width:90%;text-align:center}
+.toast.ok{background:var(--success)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Widget Chat */
+.chat-fab{position:fixed;bottom:22px;right:22px;width:58px;height:58px;border-radius:50%;background:var(--primary);border:none;font-size:26px;cursor:pointer;z-index:200;box-shadow:0 4px 20px rgba(0,212,255,.4)}
+.chat-panel{position:fixed;bottom:92px;right:22px;width:min(360px,calc(100vw - 40px));height:460px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;z-index:200;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.chat-panel.open{display:flex}
+.chat-head{background:var(--bg-light);padding:14px 16px;font-weight:700;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.chat-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.msg.bot{background:var(--bg-light);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.user{background:var(--primary);color:#000;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-input{display:flex;padding:10px;gap:8px;border-top:1px solid var(--border)}
+.chat-input input{margin:0;flex:1}
+.chat-input button{padding:10px 14px}
+@media(max-width:600px){.hero h1{font-size:27px}.stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
-<div class="container">
-
 <header>
-  <div class="logo">&#128269; ProfCheck-IA</div>
-  <div class="nav" id="navArea">
-    <button class="btn btn-outline" onclick="showAuth()">Connexion</button>
-  </div>
+  <nav>
+    <div class="logo">🔍 ProfCheck-IA</div>
+    <div id="navArea"></div>
+  </nav>
 </header>
 
-<div id="authModal" class="card hidden">
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('login')">Connexion</div>
-    <div class="tab" onclick="switchTab('register')">Inscription</div>
-  </div>
-  <div id="loginForm">
-    <input type="email" id="loginEmail" placeholder="Email">
-    <input type="password" id="loginPass" placeholder="Mot de passe">
-    <button class="btn btn-primary" onclick="login()" style="width:100%">Se connecter</button>
-  </div>
-  <div id="registerForm" class="hidden">
-    <input type="text" id="regName" placeholder="Nom complet">
-    <input type="email" id="regEmail" placeholder="Email">
-    <input type="password" id="regPass" placeholder="Mot de passe">
-    <select id="regLevel">
-      <option value="">Niveau professionnel</option>
-      <option value="primaire">Primaire</option>
-      <option value="college">College</option>
-      <option value="lycee">Lycee</option>
-      <option value="universite">Universite</option>
-      <option value="autre">Autre</option>
-    </select>
-    <input type="text" id="regSubject" placeholder="Matiere enseignee">
-    <input type="text" id="regSchool" placeholder="Nom de l etablissement">
-    <button class="btn btn-primary" onclick="register()" style="width:100%">Creer mon compte</button>
-  </div>
-</div>
+<main class="container">
 
-<div id="dashboard" class="hidden">
-  <div id="userInfo"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0">
+  <!-- ===== LANDING ===== -->
+  <section id="landing">
+    <div class="hero">
+      <h1>Détectez la triche par <span>Intelligence Artificielle</span></h1>
+      <p>Analysez les devoirs de vos élèves en quelques secondes. Découvrez si un texte a été généré par ChatGPT, Claude ou une autre IA.</p>
+      <button class="btn btn-primary" style="font-size:16px;padding:14px 32px" onclick="showAuth()">Commencer gratuitement — 3 analyses offertes</button>
+    </div>
+
+    <h2 class="section-title">Comment ça marche ?</h2>
+    <div class="grid-3">
+      <div class="feature"><div class="f-icon">📋</div><h3>1. Collez le devoir</h3><p>Copiez le texte de l'élève et collez-le dans la zone d'analyse.</p></div>
+      <div class="feature"><div class="f-icon">🤖</div><h3>2. L'IA analyse</h3><p>Notre moteur d'analyse linguistique évalue la probabilité de génération par IA.</p></div>
+      <div class="feature"><div class="f-icon">📊</div><h3>3. Obtenez le verdict</h3><p>Score détaillé, indices repérés et conclusion prudente pour l'enseignant.</p></div>
+    </div>
+
+    <h2 class="section-title">Nos formules</h2>
+    <p class="section-sub">Paiement simple via WhatsApp — activation sous 24h</p>
+    <div class="grid-3" id="plansGrid"></div>
+
+    <div class="privacy">
+      🔒 <strong>Confidentialité :</strong> les textes analysés sont utilisés uniquement pour la détection et stockés de manière sécurisée. Seul vous y avez accès via votre compte.
+    </div>
+  </section>
+
+  <!-- ===== AUTH ===== -->
+  <section id="authView" class="hidden">
+    <div class="card" style="max-width:440px;margin:40px auto">
+      <div class="tabs">
+        <div class="tab active" id="tabLogin" onclick="switchTab('login')">Connexion</div>
+        <div class="tab" id="tabRegister" onclick="switchTab('register')">Inscription</div>
+      </div>
+
+      <div id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Votre e-mail" autocomplete="email">
+        <input type="password" id="loginPass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password">
+        <button class="btn btn-primary" style="width:100%" onclick="login()">Se connecter</button>
+      </div>
+
+      <div id="registerForm" class="hidden">
+        <input type="text" id="regName" placeholder="Nom complet">
+        <input type="email" id="regEmail" placeholder="Votre e-mail" autocomplete="email">
+        <input type="password" id="regPass" placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password">
+        <button class="btn btn-primary" style="width:100%" onclick="register()">Créer mon compte</button>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">En vous inscrivant, vous acceptez nos conditions d'utilisation. 3 analyses gratuites offertes.</p>
+      </div>
+
+      <button class="btn btn-outline" style="width:100%;margin-top:14px" onclick="showLanding()">← Retour à l'accueil</button>
+    </div>
+  </section>
+
+  <!-- ===== DASHBOARD ===== -->
+  <section id="dashView" class="hidden">
+    <div class="user-bar">
+      <div class="user-info" id="userInfo"></div>
+      <button class="btn btn-danger" onclick="logout()">Déconnexion</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box"><div class="num" id="statAnalyses">—</div><div class="lbl">Analyses réalisées</div></div>
+      <div class="stat-box"><div class="num" id="statRemaining">—</div><div class="lbl">Analyses restantes</div></div>
+    </div>
+
+    <div class="upgrade-box hidden" id="upgradeBox">
+      <h3>🔒 Limite d'essais gratuits atteinte</h3>
+      <p>Vos 3 analyses gratuites sont terminées. Passez à l'abonnement Enseignant pour des analyses illimitées.</p>
+      <div id="upgradePlans" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
     <div class="card">
-      <h3>&#128202; Analyses</h3>
-      <p id="statsAnalyses">Chargement...</p>
+      <h2 style="margin-bottom:14px">🔍 Détection de triche par IA</h2>
+      <label>Titre du devoir (optionnel)</label>
+      <input type="text" id="anaTitle" placeholder="Ex : Rédaction — La pollinisation">
+      <label>Niveau scolaire (optionnel)</label>
+      <select id="anaNiveau">
+        <option value="">— Non précisé —</option>
+        <option>Primaire</option><option>Collège</option><option>Lycée</option><option>Université</option>
+      </select>
+      <label>Texte de l'élève</label>
+      <textarea id="anaText" placeholder="Collez le devoir de l'élève ici... (minimum 50 caractères)"></textarea>
+      <button class="btn btn-primary" id="btnAnalyze" onclick="analyzeText()">Analyser</button>
     </div>
+
+    <div class="card hidden" id="resultCard">
+      <h2>📊 Résultat de l'analyse</h2>
+      <div class="score-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted)">
+          <span>Probabilité IA : <strong id="scoreAi">—</strong>%</span>
+          <span>Probabilité Humain : <strong id="scoreHuman">—</strong>%</span>
+        </div>
+        <div class="score-bar"><div class="score-fill" id="scoreFill" style="width:0%"></div></div>
+        <div class="verdict" id="verdictText"></div>
+        <div class="indicators" id="indicatorsText"></div>
+        <div class="conclusion" id="conclusionText"></div>
+        <div class="fallback-warning hidden" id="fallbackWarn">⚠️ Service IA temporairement indisponible — score indicatif basé sur une analyse locale. Veuillez réessayer dans quelques minutes pour une analyse complète.</div>
+      </div>
+    </div>
+
     <div class="card">
-      <h3>&#128218; Programmes</h3>
-      <p id="statsProgs">Chargement...</p>
+      <h2 style="margin-bottom:14px">🕘 Historique des analyses</h2>
+      <div id="historyList"><p style="color:var(--muted);font-size:14px">Aucune analyse pour le moment.</p></div>
     </div>
+  </section>
+
+</main>
+
+<footer>© 2026 ProfCheck-IA — Plateforme de détection de contenu généré par IA pour l'éducation.</footer>
+
+<!-- ===== WIDGET CHAT ===== -->
+<button class="chat-fab" onclick="toggleChat()" title="Assistant">💬</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head"><span>🤖 ProfCheck Assistant</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
+  <div class="chat-body" id="chatBody">
+    <div class="msg bot">Bonjour ! 👋 Je suis l'assistant ProfCheck-IA. Posez-moi vos questions sur la détection de triche par IA, l'interprétation des résultats ou les abonnements.</div>
   </div>
-
-  <div class="card">
-    <h2>&#128269; Detection de triche par IA</h2>
-    <textarea id="devoirText" placeholder="Collez le devoir de l eleve ici..."></textarea>
-    <button class="btn btn-primary" onclick="analyze()" id="analyzeBtn">Analyser</button>
-    <div id="analyzeResult" style="margin-top:15px"></div>
-    <div id="upgradeBox" class="hidden" style="margin-top:20px;text-align:center;padding:20px;background:#1a1a1a;border-radius:12px">
-      <p style="color:#ffaa00;margin-bottom:10px">&#128274; Limite gratuite atteinte</p>
-      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20souscrire%20a%20un%20abonnement%20ProfCheck-IA." class="btn btn-whatsapp">&#128241; S abonner par WhatsApp</a>
-      <p style="color:#666;margin-top:10px;font-size:12px">Reponse rapide par SADIK-FOUAD</p>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>&#128197; Mes Programmes (9 mois)</h2>
-    <div id="programmeForm" class="hidden">
-      <input type="text" id="progTitle" placeholder="Titre (ex: Math 3eme)">
-      <input type="text" id="progLevel" placeholder="Niveau classe">
-      <input type="date" id="progStart">
-      <button class="btn btn-primary" onclick="createProgramme()" style="width:100%">Creer le programme</button>
-    </div>
-    <div id="programmeList"></div>
-  </div>
-
-  <div class="card">
-    <h2>&#128214; Travail de demain</h2>
-    <div id="dailyPlan">Chargement...</div>
-  </div>
-
-  <button class="btn btn-outline" onclick="logout()" style="margin-top:20px">Deconnexion</button>
-</div>
-
-<div id="offers" class="hidden">
-  <h2 style="text-align:center;margin:30px 0">Choisissez votre formule</h2>
-  <div class="grid">
-    <div class="plan-card">
-      <h3>Essential</h3>
-      <div class="price">$17<span style="font-size:14px;color:#888">/mois</span></div>
-      <p>&#10003; Analyses illimitees<br>&#10003; 0 programme sur 9 mois<br>&#10003; Detection IA avancee</p>
-      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20l%20abonnement%20ESSENTIAL%20%2417%20ProfCheck-IA" class="btn btn-whatsapp" style="display:block;margin-top:15px">Choisir Essential</a>
-    </div>
-    <div class="plan-card featured">
-      <h3>Pro</h3>
-      <div class="price">$36<span style="font-size:14px;color:#888">/mois</span></div>
-      <p>&#10003; Analyses illimitees<br>&#10003; 3 programmes sur 9 mois<br>&#10003; Assistant pedagogique</p>
-      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20l%20abonnement%20PRO%20%2436%20ProfCheck-IA" class="btn btn-whatsapp" style="display:block;margin-top:15px">Choisir Pro</a>
-    </div>
-    <div class="plan-card">
-      <h3>Institution</h3>
-      <div class="price">$79<span style="font-size:14px;color:#888">/mois</span></div>
-      <p>&#10003; Tout illimite<br>&#10003; Programmes illimites<br>&#10003; Support WhatsApp prioritaire</p>
-      <a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20l%20abonnement%20INSTITUTION%20%2479%20ProfCheck-IA" class="btn btn-whatsapp" style="display:block;margin-top:15px">Choisir Institution</a>
-    </div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Votre message..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="btn btn-primary" onclick="sendChat()">➤</button>
   </div>
 </div>
 
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
+// ============================================
+// CONFIGURATION — REMPLACEZ PAR VOTRE NUMERO WHATSAPP
+// Format : code pays + numéro, sans "+" ni espaces
+// Exemple Djibouti : '25377123456'
+// ============================================
+const WHATSAPP_NUMBER = '25300000000';
+
+const PLANS = [
+  {name:'Essentiel', price:17, feats:['Analyses illimitées','Détection IA avancée','Historique complet','Support WhatsApp']},
+  {name:'Standard', price:36, feats:['Tout le plan Essentiel','Assistant IA pédagogique','Rapports détaillés','Support prioritaire'], featured:true},
+  {name:'Institution', price:78, feats:['Tout le plan Standard','Multi-enseignants','Tableau de bord établissement','Accompagnement dédié']}
+];
+
+let token = localStorage.getItem('pc_token') || '';
 let currentUser = null;
+let analysesDone = 0;
 
-fetch('/api/me').then(r => r.json()).then(d => {
-  if (d.user) { currentUser = d.user; showDashboard(d); }
-  else { document.getElementById('offers').classList.remove('hidden'); }
-});
+// ---------- UTILITAIRES ----------
+function esc(s){const d=document.createElement('div');d.textContent=String(s==null?'':s);return d.innerHTML;}
+function toast(msg, ok){const t=document.getElementById('toast');t.textContent=msg;t.className=ok?'toast ok':'toast';t.style.display='block';setTimeout(()=>t.style.display='none',4000);}
+async function api(path, opts={}){
+  const headers={'Content-Type':'application/json',...(opts.headers||{})};
+  if(token) headers['Authorization']='Bearer '+token;
+  const r = await fetch(path,{...opts,headers});
+  let d = {};
+  try{ d = await r.json(); }catch(e){}
+  if(r.status===401 && path!=='/api/login'){ localStorage.removeItem('pc_token'); token=''; }
+  return {status:r.status, data:d};
+}
+function waLink(plan){
+  const txt = encodeURIComponent('Bonjour ! Je souhaite souscrire à l\'abonnement ProfCheck-IA « '+plan.name+' » ('+plan.price+'$/mois). Mon e-mail de compte : '+(currentUser?currentUser.email:''));
+  return 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+txt;
+}
 
-function showAuth(){document.getElementById('authModal').classList.remove('hidden')}
+// ---------- NAVIGATION ----------
+function showLanding(){hideAll();document.getElementById('landing').classList.remove('hidden');renderNav();}
+function showAuth(){hideAll();document.getElementById('authView').classList.remove('hidden');renderNav();}
+function showDash(){hideAll();document.getElementById('dashView').classList.remove('hidden');renderNav();renderUser();loadHistory();}
+function hideAll(){['landing','authView','dashView'].forEach(id=>document.getElementById(id).classList.add('hidden'));}
 function switchTab(t){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('loginForm').classList.toggle('hidden', t!=='login');
-  document.getElementById('registerForm').classList.toggle('hidden', t!=='register');
+  document.getElementById('tabLogin').classList.toggle('active',t==='login');
+  document.getElementById('tabRegister').classList.toggle('active',t==='register');
+  document.getElementById('loginForm').classList.toggle('hidden',t!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden',t!=='register');
 }
 
-async function register(){
-  const body = {
-    fullName: document.getElementById('regName').value,
-    email: document.getElementById('regEmail').value,
-    password: document.getElementById('regPass').value,
-    professionLevel: document.getElementById('regLevel').value,
-    subject: document.getElementById('regSubject').value,
-    schoolName: document.getElementById('regSchool').value
-  };
-  const r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const d = await r.json();
-  if(d.success){location.reload();}
-  else{alert(d.error);}
+// ---------- RENDU ----------
+function renderNav(){
+  const nav=document.getElementById('navArea');
+  if(token && currentUser){
+    nav.innerHTML='<span style="margin-right:10px;font-size:14px;color:var(--muted)">'+esc(currentUser.name||currentUser.email)+'</span>'+
+      (currentUser.is_premium?'<span class="badge-premium">Abonnement actif</span>':'<button class="btn btn-whatsapp" style="padding:8px 14px" onclick="showLanding();setTimeout(()=>document.getElementById(\'plansGrid\').scrollIntoView({behavior:\'smooth\'}),100)">S\'abonner</button>');
+  } else {
+    nav.innerHTML='<button class="btn btn-outline" onclick="showAuth()">Connexion</button>';
+  }
+}
+function renderPlans(targetId){
+  const el=document.getElementById(targetId);
+  el.innerHTML=PLANS.map(p=>
+    '<div class="plan-card'+(p.featured?' featured':'')+'">'+
+      (p.featured?'<span class="badge-premium" style="align-self:center;margin-bottom:8px">POPULAIRE</span>':'')+
+      '<div class="plan-name">'+p.name+'</div>'+
+      '<div class="price">$'+p.price+'<small> /mois</small></div>'+
+      '<ul>'+p.feats.map(f=>'<li>'+f+'</li>').join('')+'</ul>'+
+      '<a class="btn btn-whatsapp" style="text-decoration:none;display:block" href="'+waLink(p)+'" target="_blank">S\'abonner via WhatsApp</a>'+
+    '</div>').join('');
+}
+function renderUser(){
+  const u=currentUser;
+  document.getElementById('userInfo').innerHTML='👤 <strong>'+esc(u.name||'Enseignant')+'</strong> • 📧 '+esc(u.email)+' • '+(u.is_premium?'<span class="badge-premium">Abonnement actif</span>':'<span class="badge-free">Plan gratuit</span>');
+  document.getElementById('statAnalyses').textContent = u.is_premium ? analysesDone : analysesDone;
+  document.getElementById('statRemaining').textContent = u.is_premium ? '∞' : u.free_uses;
 }
 
+// ---------- AUTH ----------
 async function login(){
-  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    email: document.getElementById('loginEmail').value,
-    password: document.getElementById('loginPass').value
-  })});
-  const d = await r.json();
-  if(d.success){location.reload();}
-  else{alert(d.error);}
-}
-
-function logout(){fetch('/api/logout').then(()=>location.reload());}
-
-function showDashboard(data){
-  document.getElementById('authModal').classList.add('hidden');
-  document.getElementById('offers').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('navArea').innerHTML = '<span style="color:#888">'+data.user.fullName+'</span>';
-  document.getElementById('userInfo').innerHTML = '&#128100; '+data.user.fullName+' &#8226; &#127891; '+data.user.professionLevel+' &#8226; &#128214; '+data.user.subject+' &#8226; &#128142; Plan: '+data.user.plan;
-  document.getElementById('statsAnalyses').innerHTML = data.analysesCount+' analyses realisees<br><small>'+data.remainingAnalyses+' restantes</small>';
-  document.getElementById('statsProgs').innerHTML = data.programmesCount+' programme(s)<br><small>Max: '+data.maxProgrammes+'</small>';
-  
-  const plan = data.user.plan;
-  
-  if (plan === 'free' || plan === 'essential') {
-    document.getElementById('programmeForm').classList.add('hidden');
-    document.getElementById('programmeList').innerHTML = 
-      '<div class="lock-box">'+
-        '<p class="lock-title">&#128274; Assistant Programme 9 mois</p>'+
-        '<p>'+(plan === 'free' 
-          ? 'Passez a l abonnement PRO ($36) pour debloquer la planification intelligente de vos programmes scolaires sur 9 mois.'
-          : 'Votre abonnement Essential ($17) ne comprend pas l assistant de programmes. Passez a PRO ($36) pour planifier vos 9 mois de cours.')+
-        '</p>'+
-        '<a href="https://wa.me/25377098637?text=Bonjour%20SADIK-FOUAD%2C%20je%20souhaite%20passer%20a%20l%20abonnement%20PRO%20%2436%20ProfCheck-IA" '+
-        'style="display:inline-block;margin-top:15px;padding:10px 20px;border-radius:50px;background:#25D366;color:#fff;text-decoration:none;font-weight:bold;">&#128241; Passer a PRO</a>'+
-      '</div>';
-    document.getElementById('dailyPlan').innerHTML = 
-      '<div style="text-align:center;padding:15px;">'+
-        '<p style="color:#666;">&#128274; L assistant Travail de demain est disponible a partir de l abonnement PRO ($36)</p>'+
-      '</div>';
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPass').value;
+  if(!email||!password) return toast('Veuillez remplir tous les champs.');
+  const {status,data} = await api('/api/login',{method:'POST',body:JSON.stringify({email,password})});
+  if(data && data.success){
+    token=data.token; localStorage.setItem('pc_token',token);
+    currentUser=data.user; analysesDone=0;
+    toast('Connexion réussie ! Bienvenue 👋',true);
+    showDash();
   } else {
-    if(data.canCreateProgramme) {
-      document.getElementById('programmeForm').classList.remove('hidden');
-    } else {
-      document.getElementById('programmeForm').classList.add('hidden');
-    }
-    loadProgrammes();
-    loadDailyPlan();
+    toast(data.error||'Erreur de connexion.');
   }
 }
-
-async function analyze(){
-  const btn = document.getElementById('analyzeBtn');
-  const txt = document.getElementById('devoirText').value;
-  if(!txt){alert('Collez un texte');return;}
-  btn.disabled = true; btn.textContent = 'Analyse en cours...';
-  
-  const r = await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:txt})});
-  const d = await r.json();
-  
-  if(d.error){
-    document.getElementById('upgradeBox').classList.remove('hidden');
-    document.getElementById('analyzeResult').innerHTML = '<p style="color:#ff4444">'+d.message+'</p>';
+async function register(){
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPass').value;
+  if(!email||!password) return toast('E-mail et mot de passe requis.');
+  if(password.length<6) return toast('Le mot de passe doit contenir au moins 6 caractères.');
+  const {data} = await api('/api/register',{method:'POST',body:JSON.stringify({name,email,password})});
+  if(data && data.success){
+    toast('Compte créé ! Connexion en cours...',true);
+    document.getElementById('loginEmail').value=email;
+    document.getElementById('loginPass').value=password;
+    await login();
   } else {
-    document.getElementById('analyzeResult').innerHTML = '<div class="chapter-item"><strong>Resultat :</strong> Score IA '+d.result.score+'%<br>'+(d.result.iaDetected?'&#9888; Texte suspect':'&#9989; Texte authentique')+'</div>';
-    setTimeout(()=>location.reload(),1500);
+    toast(data.error||'Erreur lors de l\'inscription.');
   }
-  btn.disabled = false; btn.textContent = 'Analyser';
+}
+async function logout(){
+  await api('/api/logout',{method:'POST'});
+  localStorage.removeItem('pc_token'); token=''; currentUser=null; analysesDone=0;
+  toast('Déconnexion réussie.',true);
+  showLanding();
+}
+async function loadMe(){
+  const {status,data} = await api('/api/me');
+  if(data && data.success){ currentUser=data.user; showDash(); }
+  else { showLanding(); }
 }
 
-async function createProgramme(){
-  const body = {
-    title: document.getElementById('progTitle').value,
-    level: document.getElementById('progLevel').value,
-    subject: currentUser ? currentUser.subject : '',
-    startDate: document.getElementById('progStart').value
-  };
-  const r = await fetch('/api/programmes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const d = await r.json();
-  if(d.success){alert('Programme cree sur 9 mois !'); location.reload();}
-  else{alert(d.error);}
+// ---------- ANALYSE ----------
+async function analyzeText(){
+  const text=document.getElementById('anaText').value.trim();
+  const title=document.getElementById('anaTitle').value.trim()||'Analyse sans titre';
+  const niveau=document.getElementById('anaNiveau').value;
+  if(text.length<50) return toast('Texte trop court (minimum 50 caractères).');
+  const btn=document.getElementById('btnAnalyze');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Analyse en cours...';
+  const {status,data} = await api('/api/analyze',{method:'POST',body:JSON.stringify({text,title,niveau})});
+  btn.disabled=false; btn.textContent='Analyser';
+  if(data && data.success){
+    analysesDone++;
+    currentUser.free_uses = (typeof data.remaining==='number') ? data.remaining : currentUser.free_uses;
+    currentUser.is_premium = !!data.isPremium;
+    renderResult(data);
+    renderUser();
+    loadHistory();
+    document.getElementById('anaText').value='';
+  } else if(data && data.needPremium){
+    showUpgrade(data.message);
+  } else {
+    toast(data.error||'Erreur lors de l\'analyse.');
+  }
+}
+function renderResult(d){
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('scoreAi').textContent=d.aiProbability;
+  document.getElementById('scoreHuman').textContent=d.humanProbability;
+  const fill=document.getElementById('scoreFill');
+  fill.style.width=d.aiProbability+'%';
+  fill.style.background = d.aiProbability>=60 ? 'var(--danger)' : d.aiProbability>=35 ? 'var(--warning)' : 'var(--success)';
+  const v=document.getElementById('verdictText');
+  v.textContent=d.result;
+  v.className='verdict '+(d.aiProbability>=60?'ia':d.aiProbability>=35?'mixte':'human');
+  document.getElementById('indicatorsText').textContent = d.indicators ? 'Indices : '+d.indicators : '';
+  document.getElementById('conclusionText').textContent = d.conclusion || '';
+  document.getElementById('fallbackWarn').classList.toggle('hidden', !d.usedFallback);
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function showUpgrade(msg){
+  document.getElementById('upgradeBox').classList.remove('hidden');
+  renderPlans('upgradePlans');
+  if(msg) document.querySelector('#upgradeBox p').textContent=msg;
+  document.getElementById('upgradeBox').scrollIntoView({behavior:'smooth'});
 }
 
-async function loadProgrammes(){
-  const r = await fetch('/api/programmes');
-  const list = await r.json();
-  const div = document.getElementById('programmeList');
-  if(!list.length){div.innerHTML='<p style="color:#666">Aucun programme. Creez votre premier programme de 9 mois !</p>';return;}
-  div.innerHTML = list.map(p=>
-    '<div class="chapter-item">'+
-      '<strong>'+p.title+'</strong> &mdash; '+p.level+'<br>'+
-      '<small style="color:#888">Du '+new Date(p.startDate).toLocaleDateString('fr-FR')+' au '+new Date(p.endDate).toLocaleDateString('fr-FR')+'</small>'+
-      '<div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>'+
-    '</div>'
-  ).join('');
+// ---------- HISTORIQUE ----------
+async function loadHistory(){
+  const {data} = await api('/api/analyses');
+  const el=document.getElementById('historyList');
+  if(!data || !data.success || !data.analyses || !data.analyses.length){
+    el.innerHTML='<p style="color:var(--muted);font-size:14px">Aucune analyse pour le moment.</p>';
+    return;
+  }
+  el.innerHTML=data.analyses.map(a=>
+    '<div class="history-item" onclick="alert(\'Score IA : '+Math.round(a.ai_probability)+'%\\nRésultat : '+esc(a.result).replace(/'/g,'')+'\')">'+
+      '<div class="h-title">'+esc(a.title)+'</div>'+
+      '<div class="h-meta">Score IA : '+Math.round(a.ai_probability)+'% • '+esc(a.result)+' • '+new Date(a.created_at).toLocaleString('fr-FR')+'</div>'+
+    '</div>').join('');
 }
 
-async function loadDailyPlan(){
-  const r = await fetch('/api/daily-plan');
-  const d = await r.json();
-  document.getElementById('dailyPlan').innerHTML = d.chapter ? 
-    '<div class="chapter-item">'+
-      '<strong>'+d.programme.title+'</strong><br>'+
-      '&#128197; Semaine '+d.weekNumber+'<br>'+
-      '&#128214; Chapitre : '+d.chapter.title+'<br>'+
-      '<small>'+d.suggestion+'</small>'+
-    '</div>' : 
-    '<p style="color:#666">'+d.message+'</p>';
+// ---------- CHAT ----------
+function toggleChat(){document.getElementById('chatPanel').classList.toggle('open');}
+async function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  const body=document.getElementById('chatBody');
+  body.innerHTML+='<div class="msg user">'+esc(msg)+'</div>';
+  body.innerHTML+='<div class="msg bot" id="typing">⏳ Réflexion en cours...</div>';
+  body.scrollTop=body.scrollHeight;
+  const {data} = await api('/api/chat',{method:'POST',body:JSON.stringify({message:msg})});
+  document.getElementById('typing').remove();
+  body.innerHTML+='<div class="msg bot">'+esc((data&&data.reply)||'Désolé, le service est indisponible. Réessayez.')+'</div>';
+  body.scrollTop=body.scrollHeight;
 }
+
+// ---------- DEMARRAGE ----------
+renderPlans('plansGrid');
+if(token){ loadMe(); } else { showLanding(); }
 </script>
 </body>
 </html>
-
