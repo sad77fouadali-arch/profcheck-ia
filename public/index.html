@@ -184,7 +184,7 @@ footer{text-align:center;padding:30px;color:var(--muted);font-size:13px;border-t
         <option>Primaire</option><option>Collège</option><option>Lycée</option><option>Université</option>
       </select>
       <label>Texte de l'élève</label>
-      <textarea id="anaText" placeholder="Collez le devoir de l'élève ici... (minimum 50 caractères)"></textarea>
+      <textarea id="anaText" placeholder="Collez le devoir de l'élève ici... (minimum 200 caractères)"></textarea>
       <button class="btn btn-primary" id="btnAnalyze" onclick="analyzeText()">Analyser</button>
     </div>
 
@@ -351,7 +351,7 @@ async function analyzeText(){
   const text=document.getElementById('anaText').value.trim();
   const title=document.getElementById('anaTitle').value.trim()||'Analyse sans titre';
   const niveau=document.getElementById('anaNiveau').value;
-  if(text.length<50) return toast('Texte trop court (minimum 50 caractères).');
+  if(text.length<200) return toast('Texte trop court (minimum 200 caractères).'); 
   const btn=document.getElementById('btnAnalyze');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>Analyse en cours...';
   const {status,data} = await api('/api/analyze',{method:'POST',body:JSON.stringify({text,title,niveau})});
@@ -363,7 +363,7 @@ async function analyzeText(){
     renderResult(data);
     renderUser();
     loadHistory();
-    document.getElementById('anaText').value='';
+    
   } else if(data && data.needPremium){
     showUpgrade(data.message);
   } else {
