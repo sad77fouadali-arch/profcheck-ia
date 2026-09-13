@@ -229,6 +229,7 @@ const GROQ_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-
 
 
 
+
 const DETECTION_PROMPT = `Tu es un expert en linguistique forensique appliquee a l'education. Analyse le devoir ci-dessous et evalue la probabilite qu'il ait ete genere ou reecrit par une IA (ChatGPT, Claude, Gemini...).
 
 Criteres a examiner : vocabulaire trop soutenu pour le niveau, phrases parfaitement uniformes, tournures typiques des IA ("il est important de noter", "en conclusion", "dans un monde ou"), absence de fautes naturelles, manque d'exemples personnels, structure trop lisse.
