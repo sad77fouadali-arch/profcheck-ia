@@ -225,7 +225,8 @@ app.get('/api/me', authenticate, async (req, res) => {
 // VRAIE DÉTECTION IA (GROQ)
 // ==========================================
 
-const GROQ_MODELS = ['qwen-3.6-27b', 'gpt-oss-20b', 'gpt-oss-120b'];
+const GROQ_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'];
+
 
 
 const DETECTION_PROMPT = `Tu es un expert en linguistique forensique appliquee a l'education. Analyse le devoir ci-dessous et evalue la probabilite qu'il ait ete genere ou reecrit par une IA (ChatGPT, Claude, Gemini...).
