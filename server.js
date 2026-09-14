@@ -238,12 +238,12 @@ Reponds UNIQUEMENT avec un objet JSON valide (aucun texte avant ou apres) :
 
 
 
-const DETECTION_PROMPT = `Tu es un expert en linguistique forensique appliquee a l'education. Analyse le devoir ci-dessous et evalue la probabilite qu'il ait ete genere ou reecrit par une IA (ChatGPT, Claude, Gemini...).
 
-Criteres a examiner : vocabulaire trop soutenu pour le niveau, phrases parfaitement uniformes, tournures typiques des IA ("il est important de noter", "en conclusion", "dans un monde ou"), absence de fautes naturelles, manque d'exemples personnels, structure trop lisse.
 
-Reponds UNIQUEMENT avec un objet JSON valide (aucun texte avant ou apres) :
-{"aiProbability": <nombre 0-100>, "indicators": "<3 indices precis reperes dans le texte, separes par des points-virgules>", "conclusion": "<phrase courte et prudente pour l'enseignant>"}`;
+
+
+
+
 
 async function detectWithAI(text, niveau) {
   for (const model of GROQ_MODELS) {
