@@ -228,6 +228,12 @@ app.get('/api/me', authenticate, async (req, res) => {
 // ==========================================
 
 const GROQ_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'];
+const DETECTION_PROMPT_V2 = process.env.DETECTION_PROMPT_V2 || `Tu es un expert en linguistique forensique applique a l'education. Ta mission : detecter si le devoir ci-dessous est genere par une IA, y compris une IA concue pour imiter le style d'un eleve.
+PIEGE A EVITER : les textes d'IA "humanises" utilisent des phrases courtes et un vocabulaire simple pour passer inapercus. Ne te fie pas au style simple. Cherche plutot : une structure trop propre (intro / developpement / conclusion parfaits), une absence totale d'anecdotes personnelles, d'hesitations, d'erreurs naturelles ou de details vecus, des enumerations mecaniques, et des tournures generiques ("il est important de", "en conclusion", "nous devons").
+Criteres : (1) structure uniforme et parfaite, (2) absence d'empreinte personnelle, (3) enumerations sans emotion, (4) vocabulaire etrangement lisse, (5) tournures typiques des IA.
+Si le texte fait moins de 80 mots, indique une confiance faible et precise que le texte est trop court pour conclure.
+Reponds UNIQUEMENT avec un objet JSON valide (aucun texte avant ou apres) :
+{"aiProbability": <nombre 0-100>, "confidence": "<faible|moyenne|elevee>", "indicators": "<3 indices precis reperes dans le texte, separes par des points-virgules>", "conclusion": "<verdict prudent en une phrase>"};
 
 
 
@@ -251,7 +257,7 @@ async function detectWithAI(text, niveau) {
         body: JSON.stringify({
           model: model,
           messages: [
-            { role: 'system', content: DETECTION_PROMPT },
+            { role: 'system', content: DETECTION_PROMPT_V2 }, 
             { role: 'user', content: `NIVEAU SCOLAIRE : ${niveau || 'non precise'}\n\n--- DEVOIR ---\n${text.substring(0, 8000)}\n--- FIN ---` }
           ],
           max_tokens: 700,
