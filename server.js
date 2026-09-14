@@ -48,33 +48,9 @@ async function initDatabase() {
     driver: sqlite3.Database
   });
 
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      name TEXT,
-      role TEXT DEFAULT 'teacher',
-      is_premium INTEGER DEFAULT 0,
-      free_uses INTEGER DEFAULT 3,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+  await db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, role TEXT DEFAULT 'teacher', is_premium INTEGER DEFAULT 0, free_uses INTEGER DEFAULT 3, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);");
 
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS analyses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      title TEXT,
-      text_content TEXT,
-      ai_probability REAL,
-      human_probability REAL,
-      result TEXT,
-      details TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-  `);
+  await db.exec("CREATE TABLE IF NOT EXISTS analyses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT, text_content TEXT, ai_probability REAL, human_probability REAL, result TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id));");
 }
 
 // ==========================================
@@ -228,22 +204,7 @@ app.get('/api/me', authenticate, async (req, res) => {
 // ==========================================
 
 const GROQ_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'];
-const DETECTION_PROMPT_V2 = process.env.DETECTION_PROMPT_V2 || `Tu es un expert en linguistique forensique applique a l'education. Ta mission : detecter si le devoir ci-dessous est genere par une IA, y compris une IA concue pour imiter le style d'un eleve.
-PIEGE A EVITER : les textes d'IA "humanises" utilisent des phrases courtes et un vocabulaire simple pour passer inapercus. Ne te fie pas au style simple. Cherche plutot : une structure trop propre (intro / developpement / conclusion parfaits), une absence totale d'anecdotes personnelles, d'hesitations, d'erreurs naturelles ou de details vecus, des enumerations mecaniques, et des tournures generiques ("il est important de", "en conclusion", "nous devons").
-Criteres : (1) structure uniforme et parfaite, (2) absence d'empreinte personnelle, (3) enumerations sans emotion, (4) vocabulaire etrangement lisse, (5) tournures typiques des IA.
-Si le texte fait moins de 80 mots, indique une confiance faible et precise que le texte est trop court pour conclure.
-Reponds UNIQUEMENT avec un objet JSON valide (aucun texte avant ou apres) :
-{"aiProbability": <nombre 0-100>, "confidence": "<faible|moyenne|elevee>", "indicators": "<3 indices precis reperes dans le texte, separes par des points-virgules>", "conclusion": "<verdict prudent en une phrase>"};
-
-
-
-
-
-
-
-
-
-
+const DETECTION_PROMPT_V2 = process.env.DETECTION_PROMPT_V2 || "Tu es un expert en linguistique forensique applique a l'education. Ta mission : detecter si le devoir ci-dessous est genere par une IA, y compris une IA concue pour imiter le style d'un eleve.\nPIEGE A EVITER : les textes d'IA \"humanises\" utilisent des phrases courtes et un vocabulaire simple pour passer inapercus. Ne te fie pas au style simple. Cherche plutot : une structure trop propre (intro / developpement / conclusion parfaits), une absence totale d'anecdotes personnelles, d'hesitations, d'erreurs naturelles ou de details vecus, des enumerations mecaniques, et des tournures generiques (\"il est important de\", \"en conclusion\", \"nous devons\").\nCriteres : (1) structure uniforme et parfaite, (2) absence d'empreinte personnelle, (3) enumerations sans emotion, (4) vocabulaire etrangement lisse, (5) tournures typiques des IA.\nSi le texte fait moins de 80 mots, indique une confiance faible et precise que le texte est trop court pour conclure.\nReponds UNIQUEMENT avec un objet JSON valide (aucun texte avant ou apres) :\n{\"aiProbability\": <nombre 0-100>, \"confidence\": \"<faible|moyenne|elevee>\", \"indicators\": \"<3 indices precis reperes dans le texte, separes par des points-virgules>\", \"conclusion\": \"<verdict prudent en une phrase>\"};";
 
 async function detectWithAI(text, niveau) {
   for (const model of GROQ_MODELS) {
@@ -257,8 +218,8 @@ async function detectWithAI(text, niveau) {
         body: JSON.stringify({
           model: model,
           messages: [
-            { role: 'system', content: DETECTION_PROMPT_V2 }, 
-            { role: 'user', content: `NIVEAU SCOLAIRE : ${niveau || 'non precise'}\n\n--- DEVOIR ---\n${text.substring(0, 8000)}\n--- FIN ---` }
+            { role: 'system', content: DETECTION_PROMPT_V2 },
+            { role: 'user', content: 'NIVEAU SCOLAIRE : ' + (niveau || 'non precise') + '\n\n--- DEVOIR ---\n' + text.substring(0, 8000) + '\n--- FIN ---' }
           ],
           max_tokens: 700,
           temperature: 0.2
@@ -356,8 +317,7 @@ app.post('/api/analyze', authenticate, async (req, res) => {
       : 'Probablement ecrit par un humain';
 
     await db.run(
-      `INSERT INTO analyses (user_id, title, text_content, ai_probability, human_probability, result, details)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      'INSERT INTO analyses (user_id, title, text_content, ai_probability, human_probability, result, details) VALUES (?, ?, ?, ?, ?, ?, ?)',
       user.id, title, text.substring(0, 5000),
       detection.aiProbability, detection.humanProbability, result,
       JSON.stringify({ indicators: detection.indicators, conclusion: detection.conclusion, modelUsed: detection.modelUsed })
@@ -474,7 +434,7 @@ app.post('/api/chat', async (req, res) => {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Authorization': 'Bearer ' + GROQ_API_KEY,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -482,10 +442,7 @@ app.post('/api/chat', async (req, res) => {
             messages: [
               {
                 role: 'system',
-                content: `Tu es ProfCheck Assistant, un expert en education et detection de contenu genere par IA.
-Tu aides les enseignants et professeurs a utiliser la plateforme ProfCheck-IA.
-Tu reponds en francais, de maniere professionnelle, concise et utile.
-Tu peux expliquer comment interpreter les resultats d'analyse, donner des conseils pedagogiques sur la triche par IA, et guider les utilisateurs sur l'abonnement Enseignant.`
+                content: "Tu es ProfCheck Assistant, un expert en education et detection de contenu genere par IA.\nTu aides les enseignants et professeurs a utiliser la plateforme ProfCheck-IA.\nTu reponds en francais, de maniere professionnelle, concise et utile.\nTu peux expliquer comment interpreter les resultats d'analyse, donner des conseils pedagogiques sur la triche par IA, et guider les utilisateurs sur l'abonnement Enseignant."
               },
               { role: 'user', content: message }
             ],
@@ -532,10 +489,9 @@ app.get('/api/health', (req, res) => {
 // ==========================================
 initDatabase().then(() => {
   app.listen(PORT, () => {
-    console.log(`ProfCheck-IA v2 demarre sur le port ${PORT}`);
+    console.log('ProfCheck-IA v2 demarre sur le port ' + PORT);
   });
 }).catch(err => {
   console.error('Echec initialisation base de donnees:', err);
   process.exit(1);
 });
-
