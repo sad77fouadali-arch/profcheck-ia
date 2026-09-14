@@ -16,7 +16,9 @@ const PORT = process.env.PORT || 3000;
 // Configuration (variables d'environnement Render)
 const JWT_SECRET = process.env.JWT_SECRET;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY; // ========== VERROU DIAGNOSTIC GROQ ==========
+console.log("🔑 Clé Groq reçue:", GROQ_API_KEY ? GROQ_API_KEY.substring(0, 8) + "... (" + GROQ_API_KEY.length + " caractères)" : "❌ ABSENTE");
+
 
 if (!JWT_SECRET || !ADMIN_PASSWORD || !GROQ_API_KEY) {
   console.error('ERREUR : JWT_SECRET, ADMIN_PASSWORD et GROQ_API_KEY sont requis.');
