@@ -495,3 +495,4 @@ initDatabase().then(() => {
   console.error('Echec initialisation base de donnees:', err);
   process.exit(1);
 });
+
