@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
+const { createClient } = require('@libsql/client');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,16 +43,43 @@ app.use((req, res, next) => {
 // ==========================================
 let db;
 
-async function initDatabase() {
-  db = await open({
-    filename: path.join(__dirname, 'profcheck.db'),
-    driver: sqlite3.Database
-  });
+// ========== BASE DE DONNEES TURSO (cloud - survit aux redeploys) ==========
+const TURSO_URL = process.env.TURSO_DATABASE_URL;
 
-  await db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, role TEXT DEFAULT 'teacher', is_premium INTEGER DEFAULT 0, free_uses INTEGER DEFAULT 3, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);");
+const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
-  await db.exec("CREATE TABLE IF NOT EXISTS analyses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT, text_content TEXT, ai_probability REAL, human_probability REAL, result TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id));");
+if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
+  console.error('ERREUR : variables TURSO_URL et TURSO_AUTH_TOKEN requises.');
+  process.exit(1);
 }
+
+const client = createClient({ url: TURSO_URL, authToken: TURSO_AUTH_TOKEN });
+
+const argsOf = (params) => (params.length ? { args: params } : {});
+
+db = {
+  get: async (sql, ...params) => {
+    const rs = await client.execute({ sql, ...argsOf(params) });
+    return rs.rows[0];
+  },
+  all: async (sql, ...params) => {
+    const rs = await client.execute({ sql, ...argsOf(params) });
+    return rs.rows;
+  },
+  run: async (sql, ...params) => {
+    const rs = await client.execute({ sql, ...argsOf(params) });
+    return { lastID: Number(rs.lastInsertRowid), changes: rs.rowsAffected };
+  }
+};
+
+async function initDatabase() {
+  await client.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, role TEXT DEFAULT 'teacher', is_premium INTEGER DEFAULT 0, free_uses INTEGER DEFAULT 3, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS analyses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT, text_content TEXT, ai_probability REAL, human_probability REAL, result TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id));
+  `);
+  console.log('✅ Base Turso connectée');
+}
+
 
 // ==========================================
 // PROTECTION ANTI-PIRATAGE (rate limiting)
