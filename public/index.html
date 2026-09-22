@@ -444,6 +444,37 @@ async function sendChat(){
   body.innerHTML+='<div class="msg bot">'+esc((data&&data.reply)||'Désolé, le service est indisponible. Réessayez.')+'</div>';
   body.scrollTop=body.scrollHeight;
 }
+// ===== EXPORT RAPPORT PDF =====
+function exportReport(){
+  const t=(document.getElementById('anaTitle').value||'Devoir sans titre').trim();
+  const n=document.getElementById('anaNiveau').value||'Non précisé';
+  const ai=document.getElementById('scoreAi').textContent||'—';
+  const hu=document.getElementById('scoreHuman').textContent||'—';
+  const v=document.getElementById('verdictText').textContent||'—';
+  const ind=document.getElementById('indicatorsText').textContent||'—';
+  const concl=document.getElementById('conclusionText').textContent||'—';
+  const now=new Date().toLocaleString('fr-FR');
+  const prof=(currentUser&&(currentUser.name||currentUser.email))||'—';
+  const e2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.getElementById('printReport').innerHTML=
+    '<h1>RAPPORT DE DÉTECTION IA</h1>'+
+    '<div class="sub">Généré par ProfCheck-IA • '+now+'</div>'+
+    '<table>'+
+    '<tr><th>Enseignant</th><td>'+e2(prof)+'</td></tr>'+
+    '<tr><th>Titre du devoir</th><td>'+e2(t)+'</td></tr>'+
+    '<tr><th>Niveau scolaire</th><td>'+e2(n)+'</td></tr>'+
+    '<tr><th>Date du rapport</th><td>'+now+'</td></tr>'+
+    '</table>'+
+    '<table>'+
+    '<tr><th>Probabilité IA</th><th>Probabilité Humain</th></tr>'+
+    '<tr><td>'+e2(ai)+'</td><td>'+e2(hu)+'</td></tr>'+
+    '</table>'+
+    '<div class="verdictBox">VERDICT : '+e2(v)+'</div>'+
+    '<div class="sec">Indices détectés</div><div>'+e2(ind)+'</div>'+
+    '<div class="sec">Conclusion</div><div>'+e2(concl)+'</div>'+
+    '<div class="foot"><span>Document généré par ProfCheck-IA</span><span>Signature de l\'enseignant : ______________</span></div>';
+  window.print();
+}
 
 // ---------- DEMARRAGE ----------
 renderPlans('plansGrid');
