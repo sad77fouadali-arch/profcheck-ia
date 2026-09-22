@@ -407,6 +407,7 @@ renderUser();
     '<div class="history-item" onclick="alert(\'Score IA : '+Math.round(a.ai_probability)+'%\\nRésultat : '+esc(a.result).replace(/'/g,'')+'\')">'+
       '<div class="h-title">'+esc(a.title)+'</div>'+
       '<div class="h-meta">Score IA : '+Math.round(a.ai_probability)+'% • '+esc(a.result)+' • '+new Date(a.created_at).toLocaleString('fr-FR')+'</div>'+
+
     '</div>').join('');
 }
 
