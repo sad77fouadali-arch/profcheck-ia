@@ -93,6 +93,21 @@ footer{text-align:center;padding:30px;color:var(--muted);font-size:13px;border-t
 .chat-input input{margin:0;flex:1}
 .chat-input button{padding:10px 14px}
 @media(max-width:600px){.hero h1{font-size:27px}.stats{grid-template-columns:1fr 1fr}}
+  /* ===== RAPPORT PDF ===== */
+#printReport{display:none}
+@media print{
+  body>*{display:none!important}
+  #printReport{display:block!important;color:#000;background:#fff;padding:10mm;font-size:13px;line-height:1.6}
+  #printReport h1{font-size:20px;text-align:center;margin:0 0 4px}
+  #printReport .sub{text-align:center;color:#444;margin-bottom:16px;font-size:12px}
+  #printReport table{width:100%;border-collapse:collapse;margin-bottom:14px}
+  #printReport td,#printReport th{border:1px solid #999;padding:6px 8px;text-align:left;font-size:12px}
+  #printReport th{background:#eee}
+  #printReport .verdictBox{border:2px solid #000;padding:10px;text-align:center;font-size:15px;font-weight:bold;margin:14px 0}
+  #printReport .sec{font-weight:bold;margin-top:12px;border-bottom:1px solid #000;padding-bottom:2px}
+  #printReport .foot{margin-top:30px;font-size:11px;color:#444;display:flex;justify-content:space-between}
+}
+
 </style>
 </head>
 <body>
