@@ -215,7 +215,8 @@ footer{text-align:center;padding:30px;color:var(--muted);font-size:13px;border-t
         <div class="indicators" id="indicatorsText"></div>
         <div class="conclusion" id="conclusionText"></div>
         <div class="fallback-warning hidden" id="fallbackWarn">⚠️ Service IA temporairement indisponible — score indicatif basé sur une analyse locale. Veuillez réessayer dans quelques minutes pour une analyse complète.</div>
-      </div>
+      </div> <button class="btn btn-primary" style="margin-top:14px" onclick="exportReport()">📄 Exporter le rapport PDF</button>
+
     </div>
 
     <div class="card">
@@ -242,6 +243,7 @@ footer{text-align:center;padding:30px;color:var(--muted);font-size:13px;border-t
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="printReport"></div>
 
 <script>
 // ============================================
