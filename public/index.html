@@ -396,6 +396,9 @@ function showUpgrade(msg){
 async function loadHistory(){
   const {data} = await api('/api/analyses');
   const el=document.getElementById('historyList');
+analysesDone=(data?.success&&data.analyses)?data.analyses.length:0;
+renderUser();
+
   if(!data || !data.success || !data.analyses || !data.analyses.length){
     el.innerHTML='<p style="color:var(--muted);font-size:14px">Aucune analyse pour le moment.</p>';
     return;
