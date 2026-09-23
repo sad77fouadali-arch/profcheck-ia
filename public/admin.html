@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — ProfCheck-IA</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;padding:20px;max-width:700px;margin:auto}
+  h1{color:#22d3ee;font-size:22px}
+  input,button{padding:12px;font-size:16px;border-radius:8px;border:1px solid #334155}
+  input{width:100%;box-sizing:border-box;margin-bottom:10px;background:#1e293b;color:#fff}
+  button{background:#22d3ee;border:none;font-weight:bold;cursor:pointer;width:100%}
+  .user{background:#1e293b;padding:12px;margin:10px 0;border-radius:8px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold}
+  .premium{background:#166534;color:#fff}
+  .gratuit{background:#78350f;color:#fff}
+  .btn-activer{background:#22c55e;padding:8px 14px;width:auto;margin-left:8px}
+  .btn-couper{background:#ef4444;padding:8px 14px;width:auto;margin-left:8px}
+  #msg{margin-top:10px;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>🔐 Panneau Admin ProfCheck-IA</h1>
+
+<div id="loginBox">
+  <input type="password" id="pwd" placeholder="Mot de passe admin">
+  <button onclick="login()">Se connecter</button>
+</div>
+
+<div id="panel" style="display:none">
+  <button onclick="loadUsers()" style="background:#334155;color:#fff;margin-bottom:10px">🔄 Actualiser la liste</button>
+  <div id="msg"></div>
+  <div id="users"></div>
+</div>
+
+<script>
+let token = localStorage.getItem('adminToken') || '';
+
+async function login(){
+  const pwd = document.getElementById('pwd').value;
+  const r = await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+  const d = await r.json();
+  if(d.success){
+    token = d.token;
+    localStorage.setItem('adminToken',token);
+    showPanel();
+  } else {
+    document.getElementById('msg').textContent = '❌ ' + d.error;
+  }
+}
+
+function showPanel(){
+  document.getElementById('loginBox').style.display='none';
+  document.getElementById('panel').style.display='block';
+  loadUsers();
+}
+
+async function loadUsers(){
+  const r = await fetch('/api/admin/users',{headers:{'Authorization':'Bearer '+token}});
+  const d = await r.json();
+  if(!d.success){ document.getElementById('msg').textContent='❌ Session expirée, reconnectez-vous'; localStorage.removeItem('adminToken'); location.reload(); return; }
+  document.getElementById('users').innerHTML = d.users.map(u=>
+    '<div class="user"><b>'+(u.name||'Sans nom')+'</b> — '+u.email+
+    ' <span class="badge '+(u.is_premium?'premium':'gratuit')+'">'+(u.is_premium?'PREMIUM':'Gratuit')+'</span>'+
+    ' <span style="color:#94a3b8;font-size:13px">(id: '+u.id+', essais: '+u.free_uses+')</span>'+
+    '<br><br>'+(u.is_premium
+      ? '<button class="btn-couper" onclick="toggle('+u.id+',false)">Couper</button>'
+      : '<button class="btn-activer" onclick="toggle('+u.id+',true)">✅ Activer Premium</button>')+
+    '</div>'
+  ).join('');
+}
+
+async function toggle(id, activate){
+  const url = activate ? '/api/admin/activate' : '/api/admin/deactivate';
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({userId:id})});
+  const d = await r.json();
+  document.getElementById('msg').textContent = d.success ? '✅ '+d.message : '❌ '+d.error;
+  loadUsers();
+}
+
+if(token) showPanel();
+</script>
+</body>
+</html>
+
