@@ -30,14 +30,24 @@ button{background:#22d3ee;border:none;font-weight:bold;cursor:pointer;width:100%
 <div id="msg"></div>
 <div id="panel" style="display:none">
 <button onclick="loadUsers()" style="background:#334155;color:#fff;margin-bottom:10px">🔄 Actualiser la liste</button>
+<button onclick="logout()" style="background:#7f1d1d;color:#fff;margin-bottom:10px">🚪 Déconnexion</button>
 <div id="users"></div>
 </div>
 <script>
-let token = localStorage.getItem('adminToken') || '';
+let token = '';
 function showMsg(t, ok){
   const m = document.getElementById('msg');
   m.textContent = t;
   m.className = ok ? 'ok' : 'err';
+}
+function showLogin(){
+  document.getElementById('loginBox').style.display='block';
+  document.getElementById('panel').style.display='none';
+}
+function logout(){
+  token = '';
+  showLogin();
+  showMsg('🚪 Déconnecté. Reconnectez-vous.', true);
 }
 async function login(){
   const pwd = document.getElementById('pwd').value;
@@ -48,9 +58,10 @@ async function login(){
     const d = await r.json();
     if(d.success){
       token = d.token;
-      localStorage.setItem('adminToken',token);
-      showMsg('✅ Connexion réussie !', true);
-      showPanel();
+      showMsg('✅ Connexion réussie ! Chargement des comptes...', true);
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('panel').style.display='block';
+      loadUsers();
     } else {
       showMsg('❌ ' + (d.error || 'Mot de passe incorrect'), false);
     }
@@ -59,19 +70,14 @@ async function login(){
   }
   btn.textContent = 'Se connecter';
 }
-function showPanel(){
-  document.getElementById('loginBox').style.display='none';
-  document.getElementById('panel').style.display='block';
-  loadUsers();
-}
 async function loadUsers(){
   try{
     const r = await fetch('/api/admin/users',{headers:{'Authorization':'Bearer '+token}});
     const d = await r.json();
     if(!d.success){
-      showMsg('❌ Session expirée, reconnectez-vous', false);
-      localStorage.removeItem('adminToken');
-      setTimeout(()=>location.reload(), 1500);
+      token = '';
+      showLogin();
+      showMsg('❌ Serveur dit : ' + (d.error || 'erreur inconnue'), false);
       return;
     }
     document.getElementById('users').innerHTML = d.users.map(u=>
@@ -97,7 +103,6 @@ async function toggle(id,activate){
     showMsg('❌ Erreur réseau : ' + e.message, false);
   }
 }
-if(token){ showPanel(); }
 </script>
 </body>
 </html>
