@@ -77,6 +77,8 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, role TEXT DEFAULT 'teacher', is_premium INTEGER DEFAULT 0, free_uses INTEGER DEFAULT 3, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS analyses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT, text_content TEXT, ai_probability REAL, human_probability REAL, result TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id));
   `);
+    try { await client.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'teacher'"); } catch(e) {}
+
   console.log('✅ Base Turso connectée');
 }
 
@@ -422,14 +424,16 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/users', authenticate, requireAdmin, async (req, res) => {
   try {
-    const users = await db.all(
-      'SELECT id, email, name, role, is_premium, free_uses, created_at FROM users ORDER BY created_at DESC'
+        const users = await db.all(
+      'SELECT id, email, name, is_premium, free_uses, created_at FROM users ORDER BY created_at DESC'
     );
-    res.json({ success: true, users: users.map(u => ({ ...u, is_premium: !!u.is_premium })) });
+    res.json({ success: true, users: users.map(u => ({ id: u.id, email: u.email, name: u.name, is_premium: !!u.is_premium, free_uses: u.free_uses, created_at: u.created_at })) });
   } catch (err) {
+    console.error('Admin users error:', err);
     res.status(500).json({ success: false, error: 'Erreur serveur' });
   }
 });
+
 
 app.post('/api/admin/activate', authenticate, requireAdmin, async (req, res) => {
   try {
