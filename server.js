@@ -55,7 +55,8 @@ if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
 
 const client = createClient({ url: TURSO_URL, authToken: TURSO_AUTH_TOKEN });
 
-const argsOf = (params) => (params.length ? { args: params } : {});
+const argsOf = (params) => ({ args: params });
+
 
 db = {
   get: async (sql, ...params) => {
